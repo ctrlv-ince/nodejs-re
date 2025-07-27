@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Your Cart - Bit & Board</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <script src="js/cart.js"></script>
+  </head>
+  <body style="background: #0f2027; background: linear-gradient(135deg, #2c5364 0%, #203a43 50%, #0f2027 100%); min-height: 100vh; font-family: 'Roboto Mono', 'Consolas', monospace;">
+    <div id="home"></div>
+    <div class="container" style="background: rgba(255,255,255,0.95); border-radius: 12px; box-shadow: 0 4px 24px rgba(44,83,100,0.2); padding: 2rem; margin-top: 3rem;">
+      <h2 class="mb-4" style="color: #1abc9c; font-family: 'Orbitron', 'Roboto Mono', monospace; letter-spacing: 2px; text-shadow: 0 2px 8px #203a43;">Your Cart</h2>
+      <div id="cartTable"></div>
+      <a href="home.html" class="btn btn-outline-primary mt-3">Back to Bit & Board</a>
+      <button id="checkoutBtn" class="btn btn-primary mt-3" style="display:none;">Checkout</button>
+    </div>
+    <script>
+      $(function() {
+        $('#home').load('header.html');
+        // Show checkout only if logged in
+        if (sessionStorage.getItem('userId')) {
+          $('#checkoutBtn').show();
+        }
+      });
+    </script>
+  </body>
+</html>
