@@ -34,23 +34,77 @@ const registerUser = async (req, res) => {
 
 const loginUser = async (req, res) => {
     const { email, password } = req.body;
+    
+    // Input validation
+    if (!email || !password) {
+        return res.status(400).json({
+            success: false,
+            message: 'Email and password are required'
+        });
+    }
+
     const sql = 'SELECT user_id, first_name, last_name, email, password FROM users WHERE email = ?';
     connection.execute(sql, [email], async (err, results) => {
         if (err) {
-            console.log(err);
-            return res.status(500).json({ error: 'Error logging in', details: err });
+            console.error('Database error during login:', err);
+            return res.status(500).json({
+                success: false,
+                message: 'Database error during login'
+            });
         }
+        
         if (results.length === 0) {
-            return res.status(401).json({ success: false, message: 'Invalid email or password' });
+            return res.status(401).json({
+                success: false,
+                message: 'Invalid email or password'
+            });
         }
+        
         const user = results[0];
         const match = await bcrypt.compare(password, user.password);
+        
         if (!match) {
-            return res.status(401).json({ success: false, message: 'Invalid email or password' });
+            return res.status(401).json({
+                success: false,
+                message: 'Invalid email or password'
+            });
         }
+        
+        // Generate JWT token with expiration
+        const tokenPayload = {
+            id: user.user_id,
+            email: user.email
+        };
+        
+        const token = jwt.sign(
+            tokenPayload,
+            process.env.JWT_SECRET,
+            { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
+        );
+        
+        // Store token in users table
+        const updateTokenSql = 'UPDATE users SET remember_token = ?, updated_at = NOW() WHERE user_id = ?';
+        connection.execute(updateTokenSql, [token, user.user_id], (tokenErr) => {
+            if (tokenErr) {
+                console.error('Error storing token:', tokenErr);
+                // Don't fail login if token storage fails, just log it
+            }
+        });
+        
+        // Remove password from response
         delete user.password;
-        const token = jwt.sign({ id: user.user_id }, process.env.JWT_SECRET);
-        return res.status(200).json({ success: "welcome back", user, token });
+        
+        return res.status(200).json({
+            success: true,
+            message: "Login successful",
+            user: {
+                id: user.user_id,
+                first_name: user.first_name,
+                last_name: user.last_name,
+                email: user.email
+            },
+            token
+        });
     });
 };
 

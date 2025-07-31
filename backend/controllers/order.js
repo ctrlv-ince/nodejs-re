@@ -1,5 +1,6 @@
 const connection = require('../config/database');
-const sendEmail = require('../utils/sendEmail')
+const sendEmail = require('../utils/sendEmail');
+const { generateOrderReceipt } = require('../utils/generatePDF');
 
 exports.createOrder = (req, res, next) => {
     console.log(req.body,)
@@ -80,17 +81,71 @@ exports.createOrder = (req, res, next) => {
                                     });
                                 }
 
-                                const message = 'your order is being processed'
+                                // Generate PDF receipt
                                 try {
-                                    await sendEmail({
-                                        email,
-                                        subject: 'Order Success',
-                                        message
-                                    })
-                                }
-                                catch (emailErr) {
+                                    const orderDetails = {
+                                        order_id: order_id,
+                                        date_ordered: dateOrdered,
+                                        customer_name: `${results[0].first_name || ''} ${results[0].last_name || ''}`.trim(),
+                                        customer_email: email,
+                                        status: 'pending',
+                                        items: cart.map(item => ({
+                                            item_name: item.item_name || 'Unknown Item',
+                                            item_description: item.item_description || 'No description',
+                                            quantity: item.quantity,
+                                            price: item.price || 0
+                                        }))
+                                    };
 
-                                    console.log('Email error:', emailErr);
+                                    const pdfResult = await generateOrderReceipt(orderDetails);
+                                    
+                                    if (pdfResult.success) {
+                                        // Send email with PDF attachment
+                                        const message = `
+                                            <h2>Order Confirmation</h2>
+                                            <p>Dear Customer,</p>
+                                            <p>Thank you for your order! Your order #${order_id} is being processed.</p>
+                                            <p><strong>Order Details:</strong></p>
+                                            <ul>
+                                                <li>Order ID: #${order_id}</li>
+                                                <li>Date: ${dateOrdered.toLocaleDateString()}</li>
+                                                <li>Status: Processing</li>
+                                            </ul>
+                                            <p>Please find your detailed receipt attached to this email.</p>
+                                            <p>We will notify you once your order is ready for shipping.</p>
+                                            <br>
+                                            <p>Best regards,<br>Bit & Board Team</p>
+                                        `;
+
+                                        await sendEmail({
+                                            email,
+                                            subject: `Order Confirmation #${order_id} - Bit & Board`,
+                                            message,
+                                            attachments: [{
+                                                filename: pdfResult.filename,
+                                                path: pdfResult.filepath
+                                            }]
+                                        });
+                                    } else {
+                                        // Send email without attachment if PDF generation fails
+                                        const message = `
+                                            <h2>Order Confirmation</h2>
+                                            <p>Dear Customer,</p>
+                                            <p>Thank you for your order! Your order #${order_id} is being processed.</p>
+                                            <p>We will send you a detailed receipt shortly.</p>
+                                            <br>
+                                            <p>Best regards,<br>Bit & Board Team</p>
+                                        `;
+
+                                        await sendEmail({
+                                            email,
+                                            subject: `Order Confirmation #${order_id} - Bit & Board`,
+                                            message
+                                        });
+                                    }
+                                } catch (emailErr) {
+                                    console.log('Email/PDF error:', emailErr);
+                                    // Don't fail the order if email fails
                                 }
 
                                 if (!res.headersSent) {

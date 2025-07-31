@@ -1,11 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const accountController = require('../controllers/account');
+const {isAuthenticatedUser} = require('../middlewares/auth');
+const {requireAdmin, requireAdminOrOwner} = require('../middlewares/roleAuth');
 
-router.get('/accounts', accountController.getAllAccounts);
-router.get('/accounts/:id', accountController.getAccount);
-router.post('/accounts', accountController.createAccount);
-router.put('/accounts/:id', accountController.updateAccount);
-router.delete('/accounts/:id', accountController.deleteAccount);
+router.get('/accounts', isAuthenticatedUser, requireAdmin, accountController.getAllAccounts);
+router.get('/accounts/:id', isAuthenticatedUser, requireAdminOrOwner, accountController.getAccount);
+router.post('/accounts', isAuthenticatedUser, requireAdmin, accountController.createAccount);
+router.put('/accounts/:id', isAuthenticatedUser, requireAdmin, accountController.updateAccount);
+router.delete('/accounts/:id', isAuthenticatedUser, requireAdmin, accountController.deleteAccount);
 
-module.exports = router; 
+module.exports = router;

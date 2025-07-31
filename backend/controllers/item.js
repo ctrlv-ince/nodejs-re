@@ -142,3 +142,37 @@ exports.deleteItem = (req, res) => {
     });
 }
 
+exports.searchItems = (req, res) => {
+    const { term } = req.query;
+    if (!term) {
+        return res.status(400).json({ error: 'Search term is required' });
+    }
+
+    const sql = `SELECT i.item_id, i.item_name, i.item_description, i.price, img.image_path
+                 FROM items i
+                 LEFT JOIN item_images img ON i.item_id = img.item_id AND img.is_primary = 1
+                 WHERE i.item_name LIKE ? OR i.item_description LIKE ?
+                 AND i.deleted_at IS NULL
+                 ORDER BY i.item_name
+                 LIMIT 10`;
+    
+    const searchTerm = `%${term}%`;
+    
+    try {
+        connection.execute(sql, [searchTerm, searchTerm], (err, rows) => {
+            if (err) {
+                console.log(err);
+                return res.status(500).json({ error: 'Search error', details: err });
+            }
+            
+            return res.status(200).json({
+                success: true,
+                rows: rows
+            });
+        });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ error: 'Search error' });
+    }
+};
+
