@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jul 26, 2025 at 04:58 AM
+-- Generation Time: Aug 04, 2025 at 12:08 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -50,7 +50,11 @@ INSERT INTO `accounts` (`account_id`, `user_id`, `username`, `password`, `role`,
 (2, 2, 'testuser', '$2y$10$/kTj7AH.TSerMb1PUw6oquPXdQKWAe.xeC1Pd7/o0p1Ct3NJLj3A.', 'admin', 'default.jpg', 'active', '2025-04-05 17:51:05', '2025-04-07 01:06:45'),
 (3, 3, 'nyseam', '$2y$10$GjxiJ8lhetqbKKvjODzDRu57x77wxOUeLyzTsAppcfQqe/iqF.XWi', 'user', 'profile_pictures/68OjGUoNOYqq4SkueHSAKjqNfAE5udPC62ZFruCG.jpg', 'active', '2025-04-05 18:09:16', '2025-04-05 18:09:16'),
 (4, 4, 'lansss', '$2y$10$4fh/K/B1dGVi6N1jQS1kHO9cplXTdBEwz4eoN125nHpsUxtuO/fJy', 'user', 'profile_pictures/jRsmfD0zQUDJynJkbtEZ64w92Lzh3f3A7P1koksU.jpg', 'active', '2025-04-06 20:34:31', '2025-04-06 22:22:58'),
-(5, 5, 'ctrlv_ince', '$2y$10$g32qIYsDdpmutlgpetWgBe65PsP5u7244QSlj6KKhCkUP0tM0YQoy', 'user', 'profile_pictures/Ll2RuNDBCLac6Cr1IXIW0cGGc1PApOT3xn7OPwme.jpg', 'active', '2025-04-06 22:54:37', '2025-04-06 22:54:37');
+(5, 5, 'ctrlv_ince', '$2y$10$g32qIYsDdpmutlgpetWgBe65PsP5u7244QSlj6KKhCkUP0tM0YQoy', 'user', 'profile_pictures/Ll2RuNDBCLac6Cr1IXIW0cGGc1PApOT3xn7OPwme.jpg', 'active', '2025-04-06 22:54:37', '2025-04-06 22:54:37'),
+(6, 6, 'tabigs', '$2b$10$.tBHTuiBf.4Y4GpWiX5wc.Hrr7nz8PCVtiVPMITSSWxOqgIcvL0.a', 'admin', 'uploads/20250723_2019_Inviting Mom Out_simple_compose_01k0vkgh8mf6qsdjy7kzcm06p9-1754117331022-473912769.png', 'active', '2025-08-01 02:10:54', '2025-08-02 06:48:51'),
+(7, 7, 'mtvtddd', '$2b$10$kXAgZYaOcUPqeXvKt6OeuOFbtBbBa.HSCFxYIH4qeH2yepOZZYiz6', 'user', 'default.jpg', 'active', '2025-08-03 02:17:23', NULL),
+(8, 8, 'motivation', '$2b$10$6SNTA5KQhBlPrJlr0eMD0eB/p3IDp871Jd0/Nkm8y0yOZprCn0H1W', 'admin', 'uploads/2000-1754258797667-774188445.png', 'active', '2025-08-03 06:02:56', '2025-08-03 22:06:37'),
+(9, 9, 'lance1234', '$2b$10$ChgEIKMxBURCvelnwBempuESQR/kGlig1YcaImhc/UF.zk/gyK6ZS', 'user', 'uploads/6190722455971152114-1754201900161-996119514.jpg', 'active', '2025-08-03 06:18:20', NULL);
 
 -- --------------------------------------------------------
 
@@ -109,7 +113,8 @@ INSERT INTO `groups` (`group_id`, `group_name`, `group_description`, `created_at
 (4, 'ESP8266', 'ESP8266 WiFi modules and development boards', '2025-04-05 17:50:10', '2025-04-05 17:50:10'),
 (5, 'STM32', 'STM32 microcontroller development boards', '2025-04-05 17:50:10', '2025-04-05 17:50:10'),
 (6, 'BeagleBone', 'BeagleBone single-board computers and accessories', '2025-04-05 17:50:10', '2025-04-05 17:50:10'),
-(7, 'Atmel', 'The company focused on embedded systems built around microcontrollers.', '2025-04-06 21:42:04', '2025-04-06 21:42:04');
+(7, 'Atmel', 'The company focused on embedded systems built around microcontrollers.', '2025-04-06 21:42:04', '2025-04-06 21:42:04'),
+(8, 'mobo', 'hahahhaweqew', '2025-08-02 14:18:34', '2025-08-02 14:18:40');
 
 -- --------------------------------------------------------
 
@@ -139,10 +144,25 @@ INSERT INTO `inventories` (`item_id`, `quantity`, `created_at`, `updated_at`) VA
 (8, 48, '2025-04-05 17:50:10', '2025-04-06 02:10:46'),
 (9, 26, '2025-04-05 17:50:10', '2025-04-06 02:16:50'),
 (10, 25, '2025-04-05 17:50:10', '2025-04-05 17:50:10'),
-(11, 20, '2025-04-05 17:50:10', '2025-04-05 17:50:10'),
+(11, 23, '2025-04-05 17:50:10', '2025-04-05 17:50:10'),
 (12, 15, '2025-04-05 17:50:10', '2025-04-05 17:50:10'),
 (16, 20, '2025-04-06 21:53:46', '2025-04-06 22:56:15'),
-(22, 10, '2025-04-07 00:55:14', '2025-04-07 00:55:14');
+(22, 10, '2025-04-07 00:55:14', '2025-04-07 00:55:14'),
+(27, 20, NULL, NULL),
+(28, 25, NULL, NULL),
+(29, 40, NULL, NULL),
+(30, 60, NULL, NULL),
+(31, 80, NULL, NULL),
+(32, 50, NULL, NULL),
+(33, 35, NULL, NULL),
+(34, 45, NULL, NULL),
+(35, 70, NULL, NULL),
+(36, 100, NULL, NULL),
+(37, 55, NULL, NULL),
+(38, 120, NULL, NULL),
+(39, 50, NULL, NULL),
+(40, 65, NULL, NULL),
+(41, 45, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -178,7 +198,22 @@ INSERT INTO `items` (`item_id`, `item_name`, `item_description`, `price`, `creat
 (11, 'BeagleBone Black', '1GHz ARM Cortex-A8, 512MB RAM, 4GB eMMC', 55.00, '2025-04-05 17:50:10', '2025-04-05 17:50:10', NULL),
 (12, 'BeagleBone AI', 'Dual Cortex-A15, 1GB RAM, 16GB eMMC, AI capabilities', 129.00, '2025-04-05 17:50:10', '2025-04-05 17:50:10', NULL),
 (16, 'Atmel AT89', 'Based on the Intel 8051 core, the AT89 series remains very popular as general purpose microcontrollers, due to their industry standard instruction set, their low unit cost, and the availability of these chips in DIL (DIP) packages.', 159.00, '2025-04-06 21:53:46', '2025-04-06 21:53:46', NULL),
-(22, 'Arduino Uno R3', 'Microcontroller board', 24.99, '2025-04-07 00:55:14', '2025-04-07 00:55:14', NULL);
+(22, 'Arduino Uno R3', 'Microcontroller board', 24.99, '2025-04-07 00:55:14', '2025-04-07 00:55:14', NULL),
+(27, 'Arduino Nano v3 Compatible', 'Compact MCU board for prototyping', 399.00, NULL, NULL, NULL),
+(28, 'ESP32 DevKit v1', 'WiFi/BLE microcontroller for IoT', 549.00, NULL, NULL, NULL),
+(29, 'Raspberry Pi Pico', 'RP2040 dual-core MCU board', 299.00, NULL, NULL, NULL),
+(30, 'DHT22 Temperature Sensor', 'Digital temp/humidity sensor', 180.00, NULL, NULL, NULL),
+(31, 'HC-SR04 Ultrasonic Sensor', 'Distance measurement module', 120.00, NULL, NULL, NULL),
+(32, 'SG90 Micro Servo', '9g micro servo motor', 150.00, NULL, NULL, NULL),
+(33, 'L298N Motor Driver', 'Dual H-bridge motor driver', 220.00, NULL, NULL, NULL),
+(34, 'OLED 0.96\" I2C Display', '128x64 monochrome display', 250.00, NULL, NULL, NULL),
+(35, 'Breadboard 830 Tie-Points', 'Solderless protoboard', 130.00, NULL, NULL, NULL),
+(36, 'Jumper Wires Set (Male-Male)', '65pcs assorted jumper set', 90.00, NULL, NULL, NULL),
+(37, 'USB to TTL CH340', 'USB-UART converter module', 160.00, NULL, NULL, NULL),
+(38, 'AMS1117 3.3V Regulator', 'Voltage regulator module', 60.00, NULL, NULL, NULL),
+(39, 'Power Supply Module MB102', 'Breadboard power supply', 140.00, NULL, NULL, NULL),
+(40, 'NRF24L01+ 2.4GHz', 'Wireless transceiver module', 170.00, NULL, NULL, NULL),
+(41, 'RTC DS3231 Module', 'Real-time clock module', 190.00, NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -201,10 +236,25 @@ INSERT INTO `item_groups` (`group_id`, `item_id`, `created_at`, `updated_at`) VA
 (1, 1, NULL, NULL),
 (1, 2, '2025-04-05 17:50:10', '2025-04-05 17:50:10'),
 (1, 22, NULL, NULL),
+(1, 27, NULL, NULL),
+(1, 30, NULL, NULL),
+(1, 33, NULL, NULL),
+(1, 36, NULL, NULL),
+(1, 39, NULL, NULL),
 (2, 3, '2025-04-05 17:50:10', '2025-04-05 17:50:10'),
 (2, 4, '2025-04-05 17:50:10', '2025-04-05 17:50:10'),
+(2, 28, NULL, NULL),
+(2, 31, NULL, NULL),
+(2, 34, NULL, NULL),
+(2, 37, NULL, NULL),
+(2, 40, NULL, NULL),
 (3, 5, '2025-04-05 17:50:10', '2025-04-05 17:50:10'),
 (3, 6, '2025-04-05 17:50:10', '2025-04-05 17:50:10'),
+(3, 29, NULL, NULL),
+(3, 32, NULL, NULL),
+(3, 35, NULL, NULL),
+(3, 38, NULL, NULL),
+(3, 41, NULL, NULL),
 (4, 7, '2025-04-05 17:50:10', '2025-04-05 17:50:10'),
 (4, 8, '2025-04-05 17:50:10', '2025-04-05 17:50:10'),
 (5, 9, '2025-04-05 17:50:10', '2025-04-05 17:50:10'),
@@ -235,9 +285,38 @@ CREATE TABLE `item_images` (
 --
 
 INSERT INTO `item_images` (`image_id`, `item_id`, `image_path`, `is_primary`, `uploaded_at`, `created_at`, `updated_at`, `deleted_at`) VALUES
-(3, 1, 'items/RNMpMyd6CTXbB3IE6PwE6V629vJ5T3MGgc5DOHy3.png', 0, '2025-04-07 12:51:23', '2025-04-06 20:51:23', '2025-04-06 21:10:27', NULL),
-(5, 16, 'items/tRmvI80F8rAV3bIeZ9CPJit6CgIQWwbblSBcXNxx.jpg', 0, '2025-04-07 13:53:46', '2025-04-06 21:53:46', '2025-04-06 21:53:46', NULL),
-(6, 16, 'items/wGEFDnF8O7MTjz8JYlulJEw4azxOJ78KhJf7onbW.png', 0, '2025-04-07 13:53:46', '2025-04-06 21:53:46', '2025-04-06 21:53:46', NULL);
+(28, 1, 'uploads/arduino_mega1-1754258369805-702277044.jpg', 1, '2025-08-04 05:59:29', NULL, NULL, NULL),
+(29, 1, 'uploads/arduino_mega2-1754258369821-639556816.jpg', 0, '2025-08-04 05:59:29', NULL, NULL, NULL),
+(32, 2, 'uploads/arduino_uno1-1754258475691-897740865.jpg', 1, '2025-08-04 06:01:15', NULL, NULL, NULL),
+(33, 2, 'uploads/arduino_uno2-1754258475693-662578140.jpg', 0, '2025-08-04 06:01:15', NULL, NULL, NULL),
+(34, 3, 'uploads/Raspberry Pi 4 Model B1-1754258498595-746843213.jpg', 1, '2025-08-04 06:01:38', NULL, NULL, NULL),
+(35, 3, 'uploads/Raspberry Pi 4 Model B2-1754258498596-916697858.jpg', 0, '2025-08-04 06:01:38', NULL, NULL, NULL),
+(36, 4, 'uploads/Raspberry Pi Pico1-1754258512601-346236116.jpg', 1, '2025-08-04 06:01:52', NULL, NULL, NULL),
+(37, 4, 'uploads/Raspberry Pi Pico2-1754258512610-754430109.jpg', 0, '2025-08-04 06:01:52', NULL, NULL, NULL),
+(38, 5, 'uploads/ESP32 DevKit V1_1-1754258531930-131393757.jpg', 1, '2025-08-04 06:02:11', NULL, NULL, NULL),
+(39, 5, 'uploads/ESP32 DevKit V1_2-1754258531930-190301158.jpg', 0, '2025-08-04 06:02:11', NULL, NULL, NULL),
+(40, 6, 'uploads/ESP32-CAM1-1754258540727-282531303.jpg', 1, '2025-08-04 06:02:20', NULL, NULL, NULL),
+(41, 6, 'uploads/ESP32-CAM2-1754258540727-359762209.jpg', 0, '2025-08-04 06:02:20', NULL, NULL, NULL),
+(42, 7, 'uploads/STM32F103C8T61-1754258558607-737474282.jpg', 1, '2025-08-04 06:02:38', NULL, NULL, NULL),
+(43, 7, 'uploads/STM32F407VET61-1754258558607-72395438.jpg', 0, '2025-08-04 06:02:38', NULL, NULL, NULL),
+(44, 8, 'uploads/Wemos D1 Mini1-1754258573075-966522020.jpg', 1, '2025-08-04 06:02:53', NULL, NULL, NULL),
+(45, 8, 'uploads/Wemos D1 Mini2-1754258573076-96808313.jpeg', 0, '2025-08-04 06:02:53', NULL, NULL, NULL),
+(46, 9, 'uploads/STM32F103C8T6-1754258582432-274369796.jpg', 1, '2025-08-04 06:03:02', NULL, NULL, NULL),
+(47, 9, 'uploads/STM32F103C8T61-1754258582433-710412373.jpg', 0, '2025-08-04 06:03:02', NULL, NULL, NULL),
+(48, 10, 'uploads/NodeMCU ESP82662-1754258595469-886495598.jpg', 1, '2025-08-04 06:03:15', NULL, NULL, NULL),
+(49, 10, 'uploads/Raspberry Pi 4 Model B1-1754258595469-606647467.jpg', 0, '2025-08-04 06:03:15', NULL, NULL, NULL),
+(50, 11, 'uploads/BeagleBone Black1-1754258622714-759900140.jpg', 1, '2025-08-04 06:03:42', NULL, NULL, NULL),
+(51, 11, 'uploads/BeagleBone Black2-1754258622714-239866289.jpg', 0, '2025-08-04 06:03:42', NULL, NULL, NULL),
+(52, 12, 'uploads/BeagleBone AI1-1754258634685-105566451.jpg', 1, '2025-08-04 06:03:54', NULL, NULL, NULL),
+(53, 12, 'uploads/BeagleBone AI2-1754258634685-291083063.jpg', 0, '2025-08-04 06:03:54', NULL, NULL, NULL),
+(54, 16, 'uploads/Atmel AT891-1754258669545-227588108.jpg', 1, '2025-08-04 06:04:29', NULL, NULL, NULL),
+(55, 16, 'uploads/Atmel AT892-1754258669545-191009172.jpg', 0, '2025-08-04 06:04:29', NULL, NULL, NULL),
+(56, 22, 'uploads/arduino_uno1-1754258688342-623915980.jpg', 1, '2025-08-04 06:04:48', NULL, NULL, NULL),
+(57, 22, 'uploads/arduino_uno2-1754258688342-272173037.jpg', 0, '2025-08-04 06:04:48', NULL, NULL, NULL),
+(58, 27, 'uploads/arduino_mega1-1754258695720-320901934.jpg', 1, '2025-08-04 06:04:55', NULL, NULL, NULL),
+(59, 27, 'uploads/arduino_mega2-1754258695733-770965317.jpg', 0, '2025-08-04 06:04:55', NULL, NULL, NULL),
+(60, 28, 'uploads/NodeMCU ESP82661-1754258709751-84272192.jpg', 1, '2025-08-04 06:05:09', NULL, NULL, NULL),
+(61, 28, 'uploads/NodeMCU ESP82662-1754258709750-694221991.jpg', 0, '2025-08-04 06:05:09', NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -314,7 +393,12 @@ INSERT INTO `orderinfos` (`orderinfo_id`, `order_id`, `item_id`, `quantity`, `cr
 (17, 14, 6, 1, '2025-04-07 14:21:33', '2025-04-06 22:21:33', '2025-04-06 22:21:33'),
 (18, 15, 6, 1, '2025-04-07 14:21:38', '2025-04-06 22:21:38', '2025-04-06 22:21:38'),
 (19, 16, 6, 1, '2025-04-07 14:21:44', '2025-04-06 22:21:44', '2025-04-06 22:21:44'),
-(20, 17, 16, 2, '2025-04-07 06:56:15', '2025-04-06 22:56:15', '2025-04-06 22:56:15');
+(20, 17, 16, 2, '2025-04-07 06:56:15', '2025-04-06 22:56:15', '2025-04-06 22:56:15'),
+(21, 20, 1, 5, '2025-08-03 15:09:59', NULL, NULL),
+(22, 21, 2, 2, '2025-08-03 16:15:59', NULL, NULL),
+(23, 21, 7, 3, '2025-08-03 16:15:59', NULL, NULL),
+(24, 22, 2, 2, '2025-08-03 16:16:02', NULL, NULL),
+(25, 22, 7, 3, '2025-08-03 16:16:02', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -326,7 +410,6 @@ CREATE TABLE `orders` (
   `order_id` bigint(20) UNSIGNED NOT NULL,
   `account_id` bigint(20) UNSIGNED NOT NULL,
   `date_ordered` datetime NOT NULL,
-  `total_amount` int(11) NOT NULL,
   `status` enum('pending','shipped','for_confirm','completed','cancelled') NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
@@ -336,23 +419,26 @@ CREATE TABLE `orders` (
 -- Dumping data for table `orders`
 --
 
-INSERT INTO `orders` (`order_id`, `account_id`, `date_ordered`, `total_amount`, `status`, `created_at`, `updated_at`) VALUES
-(1, 3, '2025-04-06 03:48:20', 50, 'pending', '2025-04-05 19:48:20', '2025-04-05 19:48:20'),
-(2, 3, '2025-04-06 04:33:17', 260, 'completed', '2025-04-05 20:33:17', '2025-04-05 20:33:17'),
-(3, 3, '2025-04-06 04:37:39', 110, 'completed', '2025-04-05 20:37:39', '2025-04-05 20:37:39'),
-(4, 3, '2025-04-06 06:19:31', 55, 'pending', '2025-04-05 22:19:31', '2025-04-05 22:19:31'),
-(5, 3, '2025-04-06 07:07:03', 55, 'pending', '2025-04-05 23:07:03', '2025-04-05 23:07:03'),
-(6, 3, '2025-04-06 08:48:22', 80, 'pending', '2025-04-06 00:48:22', '2025-04-06 00:48:22'),
-(7, 3, '2025-04-06 10:10:46', 14, 'pending', '2025-04-06 02:10:46', '2025-04-06 02:10:46'),
-(8, 3, '2025-04-06 10:13:26', 10, 'pending', '2025-04-06 02:13:26', '2025-04-06 02:13:26'),
-(9, 3, '2025-04-06 10:16:29', 16, 'pending', '2025-04-06 02:16:29', '2025-04-06 02:16:29'),
-(10, 3, '2025-04-06 10:16:50', 16, 'completed', '2025-04-06 02:16:50', '2025-04-06 22:04:49'),
-(11, 4, '2025-04-07 06:06:24', 25, 'for_confirm', '2025-04-06 22:06:24', '2025-04-06 22:14:09'),
-(12, 4, '2025-04-07 06:07:28', 40, 'pending', '2025-04-06 22:07:28', '2025-04-06 22:07:28'),
-(14, 4, '2025-04-07 06:21:33', 10, 'pending', '2025-04-06 22:21:33', '2025-04-06 22:21:33'),
-(15, 4, '2025-04-07 06:21:38', 10, 'pending', '2025-04-06 22:21:38', '2025-04-06 22:21:38'),
-(16, 4, '2025-04-07 06:21:44', 10, 'pending', '2025-04-06 22:21:44', '2025-04-06 22:21:44'),
-(17, 5, '2025-04-07 06:56:15', 318, 'completed', '2025-04-06 22:56:15', '2025-04-06 22:57:17');
+INSERT INTO `orders` (`order_id`, `account_id`, `date_ordered`, `status`, `created_at`, `updated_at`) VALUES
+(1, 3, '2025-04-06 03:48:20', 'completed', '2025-04-05 19:48:20', '2025-08-02 14:33:41'),
+(2, 3, '2025-04-06 04:33:17', 'completed', '2025-04-05 20:33:17', '2025-04-05 20:33:17'),
+(3, 3, '2025-04-06 04:37:39', 'completed', '2025-04-05 20:37:39', '2025-04-05 20:37:39'),
+(4, 3, '2025-04-06 06:19:31', 'completed', '2025-04-05 22:19:31', '2025-08-02 14:36:32'),
+(5, 3, '2025-04-06 07:07:03', 'completed', '2025-04-05 23:07:03', '2025-08-02 14:38:38'),
+(6, 3, '2025-04-06 08:48:22', 'completed', '2025-04-06 00:48:22', '2025-08-03 01:30:46'),
+(7, 3, '2025-04-06 10:10:46', 'pending', '2025-04-06 02:10:46', '2025-04-06 02:10:46'),
+(8, 3, '2025-04-06 10:13:26', 'pending', '2025-04-06 02:13:26', '2025-04-06 02:13:26'),
+(9, 3, '2025-04-06 10:16:29', 'pending', '2025-04-06 02:16:29', '2025-04-06 02:16:29'),
+(10, 3, '2025-04-06 10:16:50', 'completed', '2025-04-06 02:16:50', '2025-04-06 22:04:49'),
+(11, 4, '2025-04-07 06:06:24', 'for_confirm', '2025-04-06 22:06:24', '2025-04-06 22:14:09'),
+(12, 4, '2025-04-07 06:07:28', 'pending', '2025-04-06 22:07:28', '2025-04-06 22:07:28'),
+(14, 4, '2025-04-07 06:21:33', 'pending', '2025-04-06 22:21:33', '2025-04-06 22:21:33'),
+(15, 4, '2025-04-07 06:21:38', 'pending', '2025-04-06 22:21:38', '2025-04-06 22:21:38'),
+(16, 4, '2025-04-07 06:21:44', 'pending', '2025-04-06 22:21:44', '2025-04-06 22:21:44'),
+(17, 5, '2025-04-07 06:56:15', 'completed', '2025-04-06 22:56:15', '2025-04-06 22:57:17'),
+(20, 9, '2025-08-03 15:09:59', 'completed', '2025-08-03 07:09:59', '2025-08-03 07:21:04'),
+(21, 9, '2025-08-03 16:15:59', 'completed', '2025-08-03 08:15:59', '2025-08-03 08:17:06'),
+(22, 9, '2025-08-03 16:16:02', 'completed', '2025-08-03 08:16:02', '2025-08-03 08:17:13');
 
 -- --------------------------------------------------------
 
@@ -456,7 +542,10 @@ INSERT INTO `reviews` (`review_id`, `account_id`, `item_id`, `comment`, `rating`
 (35, 1, 12, 'Best purchase I\'ve made this year. Absolutely no regrets!', 5, '2025-03-16 17:51:15', '2025-03-16 17:51:15', '2025-03-16 17:51:15', '2025-03-16 17:51:15'),
 (36, 2, 12, 'Disappointed with the quality. Not worth the price.', 1, '2024-11-22 17:51:15', '2024-11-22 17:51:15', '2024-11-22 17:51:15', '2024-11-22 17:51:15'),
 (37, 2, 12, 'The performance is outstanding, definitely worth the investment.', 4, '2024-11-11 17:51:15', '2024-11-11 17:51:15', '2024-11-11 17:51:15', '2024-11-11 17:51:15'),
-(38, 5, 16, 'Good product', 5, '2025-04-06 22:58:11', '2025-04-06 22:58:11', '2025-04-06 22:58:11', '2025-04-06 22:58:11');
+(38, 5, 16, 'Good product', 5, '2025-04-06 22:58:11', '2025-04-06 22:58:11', '2025-04-06 22:58:11', '2025-04-06 22:58:11'),
+(39, 9, 1, 'hellos', 4, '2025-08-03 08:10:04', '2025-08-03 08:15:31', NULL, NULL),
+(40, 9, 2, 'ok', 3, '2025-08-03 08:17:32', '2025-08-03 08:17:32', NULL, NULL),
+(41, 9, 7, 'good', 4, '2025-08-03 08:17:41', '2025-08-03 08:17:41', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -488,7 +577,11 @@ INSERT INTO `users` (`user_id`, `first_name`, `last_name`, `email`, `email_verif
 (2, 'Test', 'User', 'user@techstore.com', '2025-04-05 17:50:54', '$2y$10$9ou.fBiT99YOgk/NNX5ofu7acuWvWG8SB23cnwNWek3mae25yY7kS', 25, 'Female', '0987654321', NULL, '2025-04-05 17:50:54', '2025-04-05 17:50:54'),
 (3, 'Vincent', 'Borja', 'nyseam14@gmail.com', '2025-04-05 18:09:56', '$2y$10$GNz59uHvR5y9DljW7u6pFe.D7p1CgkQYxuJH2Bz7jN6uZpH.m7xzO', 20, 'Male', '09277640406', 'uJG7SxsqAfCSZjL7W9SP4Z7A6vO8brcwxYiFtuD7K11JZhxbxt4MWiHxFOYP', '2025-04-05 18:09:16', '2025-04-06 20:26:20'),
 (4, 'Lance', 'David', 'lancedavid3495@gmail.com', '2025-04-06 20:35:34', '$2y$10$4fh/K/B1dGVi6N1jQS1kHO9cplXTdBEwz4eoN125nHpsUxtuO/fJy', 20, 'Female', '09064819476', 'mxhJUkD8VvDPt7I0j3qXa09QGJmMsqHV3Ip15I1Mwr8ugwzdEeitHRlBu7NP', '2025-04-06 20:34:31', '2025-04-06 22:29:10'),
-(5, 'Erol', 'Borja', 'ryllaen14@gmail.com', '2025-04-06 22:55:18', '$2y$10$g32qIYsDdpmutlgpetWgBe65PsP5u7244QSlj6KKhCkUP0tM0YQoy', 20, 'Male', '09074819476', NULL, '2025-04-06 22:54:37', '2025-04-06 22:55:18');
+(5, 'Erol', 'Borja', 'ryllaen14@gmail.com', '2025-04-06 22:55:18', '$2y$10$g32qIYsDdpmutlgpetWgBe65PsP5u7244QSlj6KKhCkUP0tM0YQoy', 20, 'Male', '09074819476', NULL, '2025-04-06 22:54:37', '2025-04-06 22:55:18'),
+(6, 'Jay', 'Tabigue', 'jaytabigue@gmail.com', NULL, '$2b$10$.tBHTuiBf.4Y4GpWiX5wc.Hrr7nz8PCVtiVPMITSSWxOqgIcvL0.a', 23, 'Male', '09930153197', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NiwiZW1haWwiOiJqYXl0YWJpZ3VlQGdtYWlsLmNvbSIsImlhdCI6MTc', NULL, '2025-08-03 06:08:07'),
+(7, 'Motivated', 'Dad', 'zeillan14@gmail.com', NULL, '$2b$10$kXAgZYaOcUPqeXvKt6OeuOFbtBbBa.HSCFxYIH4qeH2yepOZZYiz6', NULL, NULL, '09131131546', NULL, NULL, NULL),
+(8, 'Vincent', 'Borja', 'vinceerolborja@gmail.com', NULL, '$2b$10$6SNTA5KQhBlPrJlr0eMD0eB/p3IDp871Jd0/Nkm8y0yOZprCn0H1W', 21, 'Male', '09123456789', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6OCwiZW1haWwiOiJ2aW5jZWVyb2xib3JqYUBnbWFpbC5jb20iLCJpYXQ', '2025-08-03 06:02:56', '2025-08-03 22:06:37'),
+(9, 'Lance', 'David', 'LANCEDAVID34956@GMAIL.COM', NULL, '$2b$10$ChgEIKMxBURCvelnwBempuESQR/kGlig1YcaImhc/UF.zk/gyK6ZS', 21, 'Male', '09296849025', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6OSwiZW1haWwiOiJMQU5DRURBVklEMzQ5NTZAR01BSUwuQ09NIiwiaWF', '2025-08-03 06:18:20', '2025-08-03 06:18:43');
 
 --
 -- Indexes for dumped tables
@@ -614,7 +707,7 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `accounts`
 --
 ALTER TABLE `accounts`
-  MODIFY `account_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `account_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT for table `carts`
@@ -632,19 +725,19 @@ ALTER TABLE `failed_jobs`
 -- AUTO_INCREMENT for table `groups`
 --
 ALTER TABLE `groups`
-  MODIFY `group_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `group_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `items`
 --
 ALTER TABLE `items`
-  MODIFY `item_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
+  MODIFY `item_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=42;
 
 --
 -- AUTO_INCREMENT for table `item_images`
 --
 ALTER TABLE `item_images`
-  MODIFY `image_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `image_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=62;
 
 --
 -- AUTO_INCREMENT for table `migrations`
@@ -656,13 +749,13 @@ ALTER TABLE `migrations`
 -- AUTO_INCREMENT for table `orderinfos`
 --
 ALTER TABLE `orderinfos`
-  MODIFY `orderinfo_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
+  MODIFY `orderinfo_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
 
 --
 -- AUTO_INCREMENT for table `orders`
 --
 ALTER TABLE `orders`
-  MODIFY `order_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
+  MODIFY `order_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
 
 --
 -- AUTO_INCREMENT for table `personal_access_tokens`
@@ -674,13 +767,13 @@ ALTER TABLE `personal_access_tokens`
 -- AUTO_INCREMENT for table `reviews`
 --
 ALTER TABLE `reviews`
-  MODIFY `review_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=39;
+  MODIFY `review_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=42;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `user_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `user_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- Constraints for dumped tables
