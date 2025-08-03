@@ -130,14 +130,6 @@ const generateOrderReceipt = async (orderData) => {
                .text('For questions about this order, please contact us at info@bitandboard.com', 50, yPosition + 15)
                .text(`Generated on: ${new Date().toLocaleString()}`, 50, yPosition + 30);
             
-            // Add QR code placeholder (you can implement actual QR code generation)
-            doc.rect(450, yPosition, 80, 80)
-               .strokeColor('#cccccc')
-               .stroke()
-               .fontSize(8)
-               .fillColor('#999999')
-               .text('QR Code', 475, yPosition + 35);
-            
             // Finalize the PDF
             doc.end();
             
