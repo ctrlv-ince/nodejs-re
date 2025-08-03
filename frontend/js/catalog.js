@@ -1,4 +1,5 @@
 $(function() {
+  const url = 'http://localhost:4000/';
   $('#home').load('header.html');
 
   // Modes: 'infinite' or 'paged' (manual load more). Default now: 'paged'
@@ -60,7 +61,7 @@ $(function() {
     const startIndex = page * pageSize;
     const endIndex = startIndex + pageSize;
 
-    $.get('http://localhost:4000/api/v1/items', function(data) {
+    $.get(`${url}api/v1/items`, function(data) {
       const rows = Array.isArray(data.rows) ? data.rows : [];
 
       // De-duplicate any accidental duplicates from the backend by item_id
@@ -88,7 +89,7 @@ $(function() {
       const batchIds = [];
 
       items.forEach(function(value) {
-        const imgSrc = value.image_path ? ('http://localhost:4000/' + value.image_path) : 'https://via.placeholder.com/300x200?text=No+Image';
+        const imgSrc = value.image_path ? (`${url}${value.image_path.startsWith('/') ? value.image_path.slice(1) : value.image_path}`) : 'https://via.placeholder.com/300x200?text=No+Image';
         batchIds.push(value.item_id);
         html += `<div class="col-md-6 mb-4" data-item-id="${value.item_id}">
           <div class="card h-100">
@@ -120,7 +121,7 @@ $(function() {
       // Ratings summary: try bulk, then fallback to per-item
       if (batchIds.length) {
         const idsParam = batchIds.join(',');
-        $.get(`http://localhost:4000/api/v1/reviews/summary`, { ids: idsParam })
+        $.get(`${url}api/v1/reviews/summary`, { ids: idsParam })
           .done(function(sdata){
             const rows = (sdata && (sdata.rows || sdata.result || sdata)) || [];
             const byId = {};
@@ -138,7 +139,7 @@ $(function() {
           })
           .fail(function(){
             batchIds.forEach(function(idVal){
-              $.get(`http://localhost:4000/api/v1/reviews/${idVal}`)
+              $.get(`${url}api/v1/reviews/${idVal}`)
                 .done(function(rdata){
                   const rows = (rdata && (rdata.rows || rdata.result || rdata)) || [];
                   if (!Array.isArray(rows) || rows.length === 0) {

@@ -1,5 +1,5 @@
 $(document).ready(function () {
-    const url = 'http://localhost:4000/'
+    const url = 'http://localhost:4000/';
     function getCart() {
         let cart = localStorage.getItem('cart');
         return cart ? JSON.parse(cart) : [];

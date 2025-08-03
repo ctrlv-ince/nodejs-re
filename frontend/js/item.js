@@ -1,4 +1,5 @@
 $(function() {
+  const url = 'http://localhost:4000/';
   $('#home').load('header.html');
 
   function renderStars(rating) {
@@ -16,7 +17,7 @@ $(function() {
   function loadItemReviews(itemId) {
     $('#reviewsSummary').html('<span class="text-muted">Loading reviews…</span>');
     $('#reviewsList').empty();
-    $.get(`http://localhost:4000/api/v1/reviews/${itemId}`, function(data){
+    $.get(`${url}api/v1/reviews/${itemId}`, function(data){
       const rows = (data && (data.rows || data.result || data)) || [];
       if (!Array.isArray(rows) || rows.length === 0) {
         $('#reviewsSummary').html('<span class="text-muted">No reviews yet.</span>');
@@ -54,9 +55,9 @@ $(function() {
     $('#itemCard').html('<div class="alert alert-danger">No item specified.</div>');
     return;
   }
-  $.get(`http://localhost:4000/api/v1/items/${id}`, function(data) {
+  $.get(`${url}api/v1/items/${id}`, function(data) {
     const item = data.result[0];
-    const imgSrc = item.image_path ? ('http://localhost:4000/' + item.image_path) : 'https://via.placeholder.com/300x200?text=No+Image';
+    const imgSrc = item.image_path ? (`${url}` + item.image_path) : 'https://via.placeholder.com/300x200?text=No+Image';
     const stock = Number(item.quantity || 0);
     const price = item.price;
 
@@ -98,7 +99,7 @@ $(function() {
       // Attempt to fetch profile to determine role
       $.ajax({
         method: 'GET',
-        url: 'http://localhost:4000/api/v1/profile',
+        url: `${url}api/v1/profile`,
         headers: { 'Authorization': `Bearer ${token}` },
         success: function(resp) {
           const role = (resp && resp.user && resp.user.role) ? resp.user.role : 'user';
@@ -112,10 +113,10 @@ $(function() {
             $('#edit_quantity').val(item.quantity || '');
 
             // Load thumbs for admins with delete buttons
-            $.get(`http://localhost:4000/api/v1/items/${id}/images`, function(imgData) {
+            $.get(`${url}api/v1/items/${id}/images`, function(imgData) {
               const rows = Array.isArray(imgData) ? imgData : (imgData && imgData.rows ? imgData.rows : []);
               const thumbs = rows.map(r => {
-                const src = r.image_path ? ('http://localhost:4000/' + r.image_path) : null;
+                const src = r.image_path ? (`${url}` + r.image_path) : null;
                 if (!src) return '';
                 return `
                   <div class="position-relative d-inline-block m-1">
@@ -148,7 +149,7 @@ $(function() {
               const fd = new FormData(formEl);
 
               $.ajax({
-                url: `http://localhost:4000/api/v1/items/${id}`,
+                url: `${url}api/v1/items/${id}`,
                 type: 'PUT',
                 data: fd,
                 processData: false,
@@ -205,7 +206,7 @@ $(function() {
                   return;
                 }
                 $.ajax({
-                  url: `http://localhost:4000/api/v1/items/${id}/images`,
+                  url: `${url}api/v1/items/${id}/images`,
                   type: 'DELETE',
                   data: JSON.stringify({ image_path: imagePath }),
                   processData: false,
@@ -215,10 +216,10 @@ $(function() {
                     Swal.fire({ icon: 'success', text: 'Image deleted.' });
                     // Rebuild thumbnails without reloading page
                     $('#adminImageThumbs').empty();
-                    $.get(`http://localhost:4000/api/v1/items/${id}/images`, function(imgData2) {
+                    $.get(`${url}api/v1/items/${id}/images`, function(imgData2) {
                       const rows2 = Array.isArray(imgData2) ? imgData2 : (imgData2 && imgData2.rows ? imgData2.rows : []);
                       const thumbs2 = rows2.map(r => {
-                        const src2 = r.image_path ? ('http://localhost:4000/' + r.image_path) : null;
+                        const src2 = r.image_path ? (`${url}` + r.image_path) : null;
                         if (!src2) return '';
                         return `
                           <div class="position-relative d-inline-block m-1">
@@ -277,13 +278,13 @@ $(function() {
     // Load all images for this item (gallery)
     $.ajax({
       method: 'GET',
-      url: `http://localhost:4000/api/v1/items/${id}/images`
+      url: `${url}api/v1/items/${id}/images`
     }).done(function(imgData) {
       const rows = Array.isArray(imgData) ? imgData : (imgData && imgData.rows ? imgData.rows : []);
       if (rows.length > 0) {
         // Build a simple thumbnail strip under main image
         const thumbs = rows.map(r => {
-          const src = r.image_path ? ('http://localhost:4000/' + r.image_path) : null;
+          const src = r.image_path ? (`${url}` + r.image_path) : null;
           return src ? `<img src="${src}" class="img-thumbnail mr-2 mb-2 item-thumb" style="width:70px;height:70px;object-fit:cover;cursor:pointer;border:${r.is_primary ? '2px solid #1abc9c' : '1px solid #ccc'}">` : '';
         }).join('');
         $('#itemCard .card-body').append(`<div class="mt-3" id="itemThumbs">${thumbs}</div>`);
@@ -383,7 +384,7 @@ $(function() {
     let formData = new FormData(form);
         $.ajax({
       method: "POST",
-      url: 'http://localhost:4000/api/v1/items',
+      url: `${url}api/v1/items`,
             data: formData,
       processData: false,
             contentType: false,

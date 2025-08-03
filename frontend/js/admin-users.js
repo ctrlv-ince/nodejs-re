@@ -67,7 +67,7 @@ $(document).ready(function() {
     function initializeDataTable() {
         usersTable = $('#usersTable').DataTable({
             ajax: {
-                url: url + 'api/v1/accounts',
+                url: `${url}api/v1/accounts`,
                 type: 'GET',
                 headers: {
                     'Authorization': 'Bearer ' + sessionStorage.getItem('token')
@@ -213,7 +213,7 @@ $(document).ready(function() {
         };
 
         $.ajax({
-            url: url + 'api/v1/accounts/' + accountId,
+            url: `${url}api/v1/accounts/${accountId}`,
             type: 'PUT',
             headers: {
                 'Authorization': 'Bearer ' + sessionStorage.getItem('token'),
@@ -258,7 +258,7 @@ $(document).ready(function() {
         }).then((result) => {
             if (result.isConfirmed) {
                 $.ajax({
-                    url: url + 'api/v1/accounts/' + accountId,
+                    url: `${url}api/v1/accounts/${accountId}`,
                     type: 'DELETE',
                     headers: {
                         'Authorization': 'Bearer ' + sessionStorage.getItem('token')

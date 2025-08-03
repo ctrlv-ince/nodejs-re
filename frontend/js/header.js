@@ -58,7 +58,7 @@ $(function() {
     // Verify role and status; if inactive, force logout with warning
     $.ajax({
       method: 'GET',
-      url: 'http://localhost:4000/api/v1/profile',
+      url: `${url}api/v1/profile`,
       headers: { 'Authorization': 'Bearer ' + token }
     }).done(function(data) {
       if (data && data.user) {

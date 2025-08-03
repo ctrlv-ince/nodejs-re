@@ -1,5 +1,5 @@
 $(function() {
-  const url = 'http://localhost:4000/'
+  const url = 'http://localhost:4000/';
   
   // Load header
   $('#home').load('header.html', function () {
