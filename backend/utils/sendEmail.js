@@ -3,17 +3,16 @@ const nodemailer = require('nodemailer');
 const sendEmail = async (options) => {
     try {
         // Create transporter with fallback configuration
-        let transporter = nodemailer.createTransporter({
-            host: process.env.SMTP_HOST || 'smtp.gmail.com',
-            port: process.env.SMTP_PORT || 587,
-            secure: false, // true for 465, false for other ports
+        // Use correct Nodemailer API: createTransport (not createTransporter)
+        const transporter = nodemailer.createTransport({
+            host: process.env.SMTP_HOST || 'sandbox.smtp.mailtrap.io',
+            port: process.env.SMTP_PORT ? Number(process.env.SMTP_PORT) : 2525,
+            secure: String(process.env.SMTP_SECURE || 'false').toLowerCase() === 'true', // true only for 465
             auth: {
-                user: process.env.SMTP_EMAIL,
-                pass: process.env.SMTP_PASSWORD
+                user: process.env.SMTP_USER || process.env.SMTP_EMAIL,
+                pass: process.env.SMTP_PASS || process.env.SMTP_PASSWORD
             },
-            tls: {
-                rejectUnauthorized: false
-            }
+            tls: { rejectUnauthorized: false }
         });
 
         // Prepare message object

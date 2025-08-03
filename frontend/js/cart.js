@@ -14,34 +14,49 @@ $(document).ready(function () {
         let html = '';
         let total = 0;
         if (cart.length === 0) {
-            html = '<p>Your cart is empty.</p>';
+            html = '<div class="alert alert-info">Your cart is empty.</div>';
         } else {
-            html = `<table class="table table-bordered">
-                <thead>
+            html = `<table class="table table-bordered table-sm align-middle">
+                <thead class="thead-light">
                     <tr>
                         <th>Image</th>
                         <th>Description</th>
-                        <th>Price</th>
-                        <th>Qty</th>
-                        <th>Subtotal</th>
+                        <th class="text-right">Price</th>
+                        <th style="width:140px;">Qty</th>
+                        <th class="text-right">Subtotal</th>
                         <th>Remove</th>
                     </tr>
                 </thead>
                 <tbody>`;
             cart.forEach((item, idx) => {
-                let subtotal = item.price * item.quantity;
+                const qty = parseInt(item.quantity || 1, 10);
+                const price = parseFloat(item.price || 0);
+                const subtotal = price * qty;
                 total += subtotal;
-                html += `<tr>
-                    <td><img src="${item.image}" width="60"></td>
+                html += `<tr data-idx="${idx}">
+                    <td><img src="${item.image}" width="60" style="object-fit:cover;border-radius:6px;"></td>
                     <td>${item.description}</td>
-                    <td>₱ ${item.price.toFixed(2)}</td>
-                    <td>${item.quantity}</td>
-                    <td>₱ ${(subtotal).toFixed(2)}</td>
+                    <td class="text-right">₱ ${price.toFixed(2)}</td>
+                    <td>
+                        <div class="input-group input-group-sm" style="max-width: 140px;">
+                            <div class="input-group-prepend">
+                                <button type="button" class="btn btn-outline-secondary qty-decrease">-</button>
+                            </div>
+                            <input type="number" class="form-control text-center cart-qty-input" min="1" value="${qty}">
+                            <div class="input-group-append">
+                                <button type="button" class="btn btn-outline-secondary qty-increase">+</button>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="text-right">₱ ${subtotal.toFixed(2)}</td>
                     <td><button class="btn btn-danger btn-sm remove-item" data-idx="${idx}">&times;</button></td>
                 </tr>`;
             });
             html += `</tbody></table>
-                <h4>Total: ₱ ${total.toFixed(2)}</h4>`;
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Total: ₱ ${total.toFixed(2)}</h5>
+                    <button id="checkoutBtnInline" class="btn btn-primary">Checkout</button>
+                </div>`;
         }
 
         $('#cartTable').html(html);
@@ -69,6 +84,7 @@ $(document).ready(function () {
     //     return JSON.parse(token)
     // }
 
+    // Remove item
     $('#cartTable').on('click', '.remove-item', function () {
         let idx = $(this).data('idx');
         let cart = getCart();
@@ -77,52 +93,125 @@ $(document).ready(function () {
         renderCart();
     });
 
+    // Quantity controls (+/-) and direct input with clamping to 1..999
+    function clampQty(n) {
+        n = parseInt(n, 10);
+        if (isNaN(n) || n < 1) return 1;
+        if (n > 999) return 999;
+        return n;
+    }
+
+    $('#cartTable').on('click', '.qty-increase', function () {
+        const $tr = $(this).closest('tr');
+        const idx = parseInt($tr.data('idx'), 10);
+        let cart = getCart();
+        if (!isNaN(idx) && cart[idx]) {
+            cart[idx].quantity = clampQty((cart[idx].quantity || 1) + 1);
+            saveCart(cart);
+            renderCart();
+        }
+    });
+
+    $('#cartTable').on('click', '.qty-decrease', function () {
+        const $tr = $(this).closest('tr');
+        const idx = parseInt($tr.data('idx'), 10);
+        let cart = getCart();
+        if (!isNaN(idx) && cart[idx]) {
+            cart[idx].quantity = clampQty((cart[idx].quantity || 1) - 1);
+            saveCart(cart);
+            renderCart();
+        }
+    });
+
+    $('#cartTable').on('input change', '.cart-qty-input', function () {
+        const $tr = $(this).closest('tr');
+        const idx = parseInt($tr.data('idx'), 10);
+        let cart = getCart();
+        if (!isNaN(idx) && cart[idx]) {
+            cart[idx].quantity = clampQty($(this).val());
+            saveCart(cart);
+            // Update row subtotal without full re-render for snappier feel
+            const qty = cart[idx].quantity;
+            const price = parseFloat(cart[idx].price || 0);
+            $(this).val(qty);
+            $tr.find('td').eq(4 - 1) // text-right subtotal cell (0:img,1:desc,2:price,3:qty,4:subtotal)
+                .text('₱ ' + (price * qty).toFixed(2));
+            // Recompute and update total
+            let total = 0;
+            cart.forEach(it => total += (parseFloat(it.price || 0) * parseInt(it.quantity || 1, 10)));
+            $('#cartTable').find('h5:contains("Total:")').text('Total: ₱ ' + total.toFixed(2));
+        }
+    });
+
     $('#header').load("header.html");
 
-    $('#checkoutBtn').on('click', function () {
+    function proceedCheckout() {
+        let cart = getCart();
 
-        itemCount = 0;
-        priceTotal = 0;
-        let cart = getCart()
-    
-
-        
-
-        const payload = JSON.stringify({
-            userId: getUserId(),
-            cart
-        });
-        console.log(payload)
-        if (getUserId()) {
-            $.ajax({
-                type: "POST",
-                url: `${url}api/v1/create-order`,
-                data: payload,
-                dataType: "json",
-                processData: false,
-                contentType: 'application/json; charset=utf-8',
-                // headers: {
-                //     "Authorization": "Bearer " + getToken()
-                // },
-                success: function (data) {
-                    console.log(data);
-                    // alert(data.status);
-                    Swal.fire({
-                        icon: "success",
-                        text: data.message,
-                    });
-                    localStorage.removeItem('cart')
-                    renderCart();
-                },
-                error: function (error) {
-                    console.log(error);
-                }
-            });
-
+        // Warn when trying to checkout with an empty cart
+        if (!Array.isArray(cart) || cart.length === 0) {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'warning',
+                    text: 'Your cart is empty.',
+                    timer: 1500,
+                    showConfirmButton: false,
+                    position: 'bottom-right'
+                });
+            } else {
+                alert('Your cart is empty.');
+            }
+            return;
         }
 
+        // Require user session and token
+        const token = sessionStorage.getItem('token');
+        const userId = getUserId();
 
-    });
+        if (!userId || !token) {
+            Swal.fire({
+                icon: 'warning',
+                text: 'You must be logged in to checkout.',
+                showConfirmButton: true
+            }).then(() => {
+                window.location.href = 'login.html';
+            });
+            return;
+        }
+
+        const payload = JSON.stringify({ cart });
+
+        $.ajax({
+            type: "POST",
+            url: `${url}api/v1/create-order`,
+            data: payload,
+            dataType: "json",
+            processData: false,
+            contentType: 'application/json; charset=utf-8',
+            headers: {
+                "Authorization": "Bearer " + token
+            },
+            success: function (data) {
+                Swal.fire({
+                    icon: "success",
+                    text: data.message || 'Order placed successfully',
+                });
+                localStorage.removeItem('cart');
+                renderCart();
+            },
+            error: function (error) {
+                console.log(error);
+                Swal.fire({
+                    icon: 'error',
+                    text: (error.responseJSON && (error.responseJSON.message || error.responseJSON.error)) || 'Checkout failed'
+                });
+            }
+        });
+    }
+
+    // Support both the inline checkout button (rendered with the table) and the page-level button
+    $('#cartTable').on('click', '#checkoutBtnInline', proceedCheckout);
+    $('#checkoutBtn').on('click', proceedCheckout);
 
     renderCart()
 

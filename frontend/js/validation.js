@@ -8,27 +8,38 @@ $(document).ready(function() {
         return this.optional(element) || /^09\d{9}$/.test(value);
     }, "Please enter a valid Philippine mobile number (09xxxxxxxxx)");
 
+    // Generic regex/pattern validator (since jQuery Validate has no built-in 'pattern' rule)
+    $.validator.addMethod("regex", function(value, element, pattern) {
+        if (this.optional(element)) return true;
+        let regex = pattern;
+        if (typeof pattern === 'string') {
+            // support pattern as string e.g. "^[a-z]+$"
+            regex = new RegExp(pattern);
+        }
+        return regex.test(value);
+    }, "Invalid format");
+
     // Registration form validation
     if ($('#registerForm').length) {
-        $('#registerForm').validate({
+        const validator = $('#registerForm').validate({
             rules: {
                 first_name: {
                     required: true,
                     minlength: 2,
                     maxlength: 50,
-                    pattern: /^[a-zA-Z\s]+$/
+                    regex: /^[a-zA-Z\s]+$/
                 },
                 last_name: {
                     required: true,
                     minlength: 2,
                     maxlength: 50,
-                    pattern: /^[a-zA-Z\s]+$/
+                    regex: /^[a-zA-Z\s]+$/
                 },
                 username: {
                     required: true,
                     minlength: 3,
                     maxlength: 20,
-                    pattern: /^[a-zA-Z0-9_]+$/
+                    regex: /^[a-zA-Z0-9_]+$/
                 },
                 email: {
                     required: true,
@@ -47,6 +58,14 @@ $(document).ready(function() {
                     required: true,
                     equalTo: "#password"
                 },
+                age: {
+                    required: function() {
+                        return $('#age').attr('min') === '18';
+                    },
+                    number: true,
+                    min: 18,
+                    max: 120
+                },
                 profile_img: {
                     extension: "jpg|jpeg|png",
                     filesize: 5242880 // 5MB
@@ -54,60 +73,133 @@ $(document).ready(function() {
             },
             messages: {
                 first_name: {
-                    required: "First name is required",
-                    minlength: "First name must be at least 2 characters",
-                    maxlength: "First name cannot exceed 50 characters",
-                    pattern: "First name can only contain letters and spaces"
+                    required: "Please enter your first name.",
+                    minlength: "First name must be at least 2 characters.",
+                    maxlength: "First name must be 50 characters or fewer.",
+                    regex: "First name can only contain letters and spaces."
                 },
                 last_name: {
-                    required: "Last name is required",
-                    minlength: "Last name must be at least 2 characters",
-                    maxlength: "Last name cannot exceed 50 characters",
-                    pattern: "Last name can only contain letters and spaces"
+                    required: "Please enter your last name.",
+                    minlength: "Last name must be at least 2 characters.",
+                    maxlength: "Last name must be 50 characters or fewer.",
+                    regex: "Last name can only contain letters and spaces."
                 },
                 username: {
-                    required: "Username is required",
-                    minlength: "Username must be at least 3 characters",
-                    maxlength: "Username cannot exceed 20 characters",
-                    pattern: "Username can only contain letters, numbers, and underscores"
+                    required: "Please choose a username.",
+                    minlength: "Username must be at least 3 characters.",
+                    maxlength: "Username must be 20 characters or fewer.",
+                    regex: "Username can only contain letters, numbers, and underscores."
                 },
                 email: {
-                    required: "Email is required",
-                    email: "Please enter a valid email address",
-                    maxlength: "Email cannot exceed 255 characters"
+                    required: "Please enter your email address.",
+                    email: "Enter a valid email address (e.g., name@example.com).",
+                    maxlength: "Email must be 255 characters or fewer."
                 },
                 phone_number: {
-                    required: "Phone number is required"
+                    required: "Please enter your mobile number.",
+                    phoneNumber: "Use PH format: 09xxxxxxxxx."
                 },
                 password: {
-                    required: "Password is required"
+                    required: "Please create a password.",
+                    strongPassword: "At least 8 characters with upper, lower, number, and special character."
                 },
                 confirm_password: {
-                    required: "Please confirm your password",
-                    equalTo: "Passwords do not match"
+                    required: "Please re-enter your password.",
+                    equalTo: "Passwords do not match."
+                },
+                age: {
+                    required: "Age restriction: 18 years old and above.",
+                    number: "Please enter a valid age.",
+                    min: "Age restriction: 18 years old and above.",
+                    max: "Please enter an age less than or equal to 120."
                 },
                 profile_img: {
-                    extension: "Please upload a valid image file (JPG, JPEG, PNG)",
-                    filesize: "File size must be less than 5MB"
+                    extension: "Allowed formats: JPG, JPEG, PNG.",
+                    filesize: "Image must be 5MB or smaller."
                 }
             },
             errorElement: 'div',
             errorClass: 'invalid-feedback',
             validClass: 'is-valid',
+            onkeyup: function(element) {
+                $(element).valid();
+            },
+            onfocusout: function(element) {
+                $(element).valid();
+            },
             errorPlacement: function(error, element) {
                 error.addClass('invalid-feedback');
-                element.closest('.form-group').append(error);
+                const group = element.closest('.form-group');
+                // Remove only existing error for this specific element to avoid lingering errors
+                group.find('div.invalid-feedback').filter(function() {
+                    return $(this).data('for') === element.attr('name');
+                }).remove();
+                error.attr('data-for', element.attr('name'));
+                group.append(error);
             },
             highlight: function(element, errorClass, validClass) {
-                $(element).addClass('is-invalid').removeClass('is-valid');
+                const $el = $(element);
+                $el.addClass('is-invalid').removeClass('is-valid');
+                const group = $el.closest('.form-group');
+                group.find('div.invalid-feedback').filter(function() {
+                    return $(this).data('for') === $el.attr('name');
+                }).show();
             },
             unhighlight: function(element, errorClass, validClass) {
-                $(element).addClass('is-valid').removeClass('is-invalid');
+                const $el = $(element);
+                const group = $el.closest('.form-group');
+                // Remove the specific error for this field when it becomes valid
+                group.find('div.invalid-feedback').filter(function() {
+                    return $(this).data('for') === $el.attr('name');
+                }).remove();
+                $el.addClass('is-valid').removeClass('is-invalid');
             },
             submitHandler: function(form) {
-                // This will be handled by the existing register button click handler
+                // prevent plugin from submitting; actual submission handled elsewhere
                 return false;
+            },
+            invalidHandler: function(event, validator) {
+                // Show a toast when the form is invalid on submit
+                if (validator.numberOfInvalids()) {
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            icon: 'error',
+                            text: 'Please fill out the required fields.',
+                            position: 'bottom-right',
+                            showConfirmButton: false,
+                            timer: 1500
+                        });
+                    }
+                }
             }
+        });
+
+        // Also trigger validation when the Create Account button is clicked with empty form
+        $(document).off('click.registerBtnGuard').on('click.registerBtnGuard', '#register', function(e) {
+            const $form = $('#registerForm');
+            if (!$form.length) return;
+            // Trigger validation
+            $form.addClass('validated');
+            // Validate all inputs to show inline messages immediately
+            if (typeof $form.valid === 'function') {
+                $form.find(':input').each(function() { if (typeof $(this).valid === 'function') { $(this).valid(); } });
+                // If invalid, show toast and STOP default to avoid double handling
+                if (!$form.valid()) {
+                    e.preventDefault();
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            icon: 'error',
+                            text: 'Please fill out the required fields.',
+                            position: 'bottom-right',
+                            showConfirmButton: false,
+                            timer: 1500
+                        });
+                    }
+                    return;
+                }
+            }
+            // If form is valid, let user.js handler proceed. Prevent duplicate bindings by triggering the actual click handler once.
+            // Do not preventDefault here so the user.js #register click handler can run the AJAX.
         });
     }
 
@@ -154,38 +246,33 @@ $(document).ready(function() {
         });
     }
 
-    // Profile update form validation
+    // Profile update form validation (aligned with profile.html and backend update fields)
     if ($('#profileForm').length) {
         $('#profileForm').validate({
             rules: {
-                title: {
-                    required: true
-                },
-                fname: {
+                first_name: {
                     required: true,
                     minlength: 2,
-                    maxlength: 50
+                    maxlength: 50,
+                    regex: /^[a-zA-Z\s]+$/
                 },
-                lname: {
+                last_name: {
                     required: true,
                     minlength: 2,
-                    maxlength: 50
+                    maxlength: 50,
+                    regex: /^[a-zA-Z\s]+$/
                 },
-                addressline: {
-                    required: true,
-                    maxlength: 255
-                },
-                town: {
-                    required: true,
-                    maxlength: 100
-                },
-                zipcode: {
-                    required: true,
-                    pattern: /^\d{4}$/
-                },
-                phone: {
+                phone_number: {
                     required: true,
                     phoneNumber: true
+                },
+                age: {
+                    required: function() {
+                        return $('#age').attr('min') === '18';
+                    },
+                    number: true,
+                    min: 18,
+                    max: 120
                 },
                 image: {
                     extension: "jpg|jpeg|png",
@@ -193,31 +280,25 @@ $(document).ready(function() {
                 }
             },
             messages: {
-                title: "Please select a title",
-                fname: {
+                first_name: {
                     required: "First name is required",
                     minlength: "First name must be at least 2 characters",
-                    maxlength: "First name cannot exceed 50 characters"
+                    maxlength: "First name cannot exceed 50 characters",
+                    regex: "First name can only contain letters and spaces"
                 },
-                lname: {
+                last_name: {
                     required: "Last name is required",
                     minlength: "Last name must be at least 2 characters",
-                    maxlength: "Last name cannot exceed 50 characters"
+                    maxlength: "Last name cannot exceed 50 characters",
+                    regex: "Last name can only contain letters and spaces"
                 },
-                addressline: {
-                    required: "Address is required",
-                    maxlength: "Address cannot exceed 255 characters"
-                },
-                town: {
-                    required: "Town/City is required",
-                    maxlength: "Town/City cannot exceed 100 characters"
-                },
-                zipcode: {
-                    required: "ZIP code is required",
-                    pattern: "Please enter a valid 4-digit ZIP code"
-                },
-                phone: {
+                phone_number: {
                     required: "Phone number is required"
+                },
+                age: {
+                    number: "Please enter a valid age",
+                    min: "Age restriction: 18 years old and above",
+                    max: "Please enter an age less than or equal to 120"
                 },
                 image: {
                     extension: "Please upload a valid image file (JPG, JPEG, PNG)",
@@ -227,22 +308,68 @@ $(document).ready(function() {
             errorElement: 'div',
             errorClass: 'invalid-feedback',
             validClass: 'is-valid',
+            onkeyup: function(element) {
+                $(element).valid();
+            },
+            onfocusout: function(element) {
+                $(element).valid();
+            },
             errorPlacement: function(error, element) {
                 error.addClass('invalid-feedback');
-                element.closest('.form-group').append(error);
+                const group = element.closest('.form-group');
+                group.find('div.invalid-feedback').filter(function() {
+                    return $(this).data('for') === element.attr('name');
+                }).remove();
+                error.attr('data-for', element.attr('name'));
+                group.append(error);
             },
             highlight: function(element, errorClass, validClass) {
-                $(element).addClass('is-invalid').removeClass('is-valid');
+                const $el = $(element);
+                $el.addClass('is-invalid').removeClass('is-valid');
+                const group = $el.closest('.form-group');
+                group.find('div.invalid-feedback').filter(function() {
+                    return $(this).data('for') === $el.attr('name');
+                }).show();
             },
             unhighlight: function(element, errorClass, validClass) {
-                $(element).addClass('is-valid').removeClass('is-invalid');
+                const $el = $(element);
+                const group = $el.closest('.form-group');
+                group.find('div.invalid-feedback').filter(function() {
+                    return $(this).data('for') === $el.attr('name');
+                }).remove();
+                $el.addClass('is-valid').removeClass('is-invalid');
+            },
+            submitHandler: function(form) {
+                return false;
+            },
+            invalidHandler: function(event, validator) {
+                if (validator.numberOfInvalids() && typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'error',
+                        text: 'Please correct the highlighted fields.',
+                        position: 'bottom-right',
+                        showConfirmButton: false,
+                        timer: 1500
+                    });
+                }
             }
         });
     }
 
+    // Define 'extension' rule locally (since additional-methods.js is not included) and keep robust filesize
+    $.validator.addMethod('extension', function(value, element, param) {
+        if (this.optional(element) || !value) return true;
+        // param can be a string like "jpg|jpeg|png" or array; normalize to string list
+        const exts = Array.isArray(param) ? param.join('|') : String(param || 'jpg|jpeg|png');
+        const re = new RegExp('\\.(' + exts.replace(/\s+/g, '') + ')$', 'i');
+        return re.test(value);
+    }, 'Please upload a file with a valid extension.');
+
     // Custom file size validation method
     $.validator.addMethod('filesize', function(value, element, param) {
-        return this.optional(element) || (element.files[0] && element.files[0].size <= param);
+        if (this.optional(element)) return true;
+        if (!element.files || !element.files.length) return true;
+        return element.files[0].size <= param;
     }, 'File size is too large');
 
     // Real-time validation feedback

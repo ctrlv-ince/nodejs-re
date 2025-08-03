@@ -11,9 +11,18 @@
   <body style="background: #0f2027; background: linear-gradient(135deg, #2c5364 0%, #203a43 50%, #0f2027 100%); min-height: 100vh; font-family: 'Roboto Mono', 'Consolas', monospace;">
     <div id="home"></div>
     <div class="container" id="catalog" style="background: rgba(255,255,255,0.95); border-radius: 12px; box-shadow: 0 4px 24px rgba(44,83,100,0.2); padding: 2rem; margin-top: 3rem;">
-      <h2 class="mb-4" style="color: #1abc9c; font-family: 'Orbitron', 'Roboto Mono', monospace; letter-spacing: 2px; text-shadow: 0 2px 8px #203a43;">Product Catalog</h2>
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0" style="color: #1abc9c; font-family: 'Orbitron', 'Roboto Mono', monospace; letter-spacing: 2px; text-shadow: 0 2px 8px #203a43;">Product Catalog</h2>
+        <div class="btn-group" role="group" aria-label="Pagination mode">
+          <button id="btnInfinite" type="button" class="btn btn-sm btn-outline-success active">Infinite scroll</button>
+          <button id="btnPaged" type="button" class="btn btn-sm btn-outline-secondary">Load more button</button>
+        </div>
+      </div>
       <div id="catalogGrid" class="row"></div>
       <div id="loading" class="text-center my-3" style="display:none;"><span class="spinner-border text-info"></span> Loading...</div>
+      <div class="text-center my-3">
+        <button id="loadMoreBtn" class="btn btn-primary" style="display:none;">Load more</button>
+      </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.12.9/dist/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>

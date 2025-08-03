@@ -1,4 +1,5 @@
 const jwt = require("jsonwebtoken");
+const connection = require("../config/database");
 
 exports.isAuthenticatedUser = (req, res, next) => {
     try {
@@ -60,6 +61,32 @@ exports.isAuthenticatedUser = (req, res, next) => {
             success: false,
             message: 'Authentication error. Please try again.'
         });
+    }
+};
+
+// Require that the authenticated user's account is active
+exports.requireActive = (req, res, next) => {
+    try {
+        const user = req.user;
+        if (!user || !user.id) {
+            return res.status(401).json({ success: false, message: 'Unauthorized' });
+        }
+        const sql = 'SELECT account_status FROM accounts WHERE user_id = ? LIMIT 1';
+        connection.execute(sql, [user.id], (err, rows) => {
+            if (err) {
+                console.error('Account status check error:', err);
+                return res.status(500).json({ success: false, message: 'Database error checking account status' });
+            }
+            if (!rows || rows.length === 0) {
+                return res.status(403).json({ success: false, message: 'Account not found' });
+            }
+            if (rows[0].account_status !== 'active') {
+                return res.status(403).json({ success: false, message: 'Account is inactive' });
+            }
+            next();
+        });
+    } catch (e) {
+        return res.status(500).json({ success: false, message: 'Error verifying account status' });
     }
 };
 

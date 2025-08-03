@@ -6,40 +6,49 @@
     <link rel="stylesheet" href="css/style.css" />
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <!-- SweetAlert2 required by item.js -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
   </head>
   <body style="background: #0f2027; background: linear-gradient(135deg, #2c5364 0%, #203a43 50%, #0f2027 100%); min-height: 100vh; font-family: 'Roboto Mono', 'Consolas', monospace;">
     <div id="home"></div>
     <div class="d-flex justify-content-center align-items-center" style="min-height:80vh;">
-      <div class="container" id="itemCreate" style="background: rgba(255,255,255,0.95); border-radius: 12px; box-shadow: 0 4px 24px rgba(44,83,100,0.2); padding: 2rem; max-width:700px; margin-bottom:2rem;">
-        <h3>Add New Item</h3>
-        <form id="itemForm" enctype="multipart/form-data">
+      <!-- Admin inline edit section; hidden by default, shown via JS when user is admin -->
+      <div class="container" id="adminEditSection" style="display:none; background: rgba(255,255,255,0.95); border-radius: 12px; box-shadow: 0 4px 24px rgba(44,83,100,0.2); padding: 2rem; max-width:700px; margin-bottom:2rem;">
+        <h3>Edit Item</h3>
+        <form id="inlineEditForm" enctype="multipart/form-data">
           <div class="form-group">
-            <label for="item_name">Name</label>
-            <input type="text" class="form-control" id="item_name" name="item_name" required />
+            <label for="edit_item_name">Name</label>
+            <input type="text" class="form-control" id="edit_item_name" name="item_name" />
           </div>
           <div class="form-group">
-            <label for="item_description">Description</label>
-            <textarea class="form-control" id="item_description" name="item_description" required></textarea>
+            <label for="edit_item_description">Description</label>
+            <textarea class="form-control" id="edit_item_description" name="item_description"></textarea>
           </div>
           <div class="form-group">
-            <label for="price">Price</label>
-            <input type="number" class="form-control" id="price" name="price" required />
+            <label for="edit_price">Price</label>
+            <input type="number" class="form-control" step="0.01" id="edit_price" name="price" />
           </div>
           <div class="form-group">
-            <label for="quantity">Quantity</label>
-            <input type="number" class="form-control" id="quantity" name="quantity" required />
+            <label for="edit_quantity">Quantity</label>
+            <input type="number" class="form-control" id="edit_quantity" name="quantity" />
           </div>
           <div class="form-group">
-            <label for="images">Images</label>
-            <input type="file" class="form-control-file" id="images" name="images" accept="image/*" multiple />
-            <div id="imagePreview" class="d-flex flex-wrap mt-2"></div>
+            <label for="edit_images">Replace/Add Image (first becomes primary)</label>
+            <input type="file" class="form-control-file" id="edit_images" name="image" accept="image/*" />
+            <div id="adminImageThumbs" class="d-flex flex-wrap mt-2"></div>
           </div>
-          <button type="submit" class="btn btn-primary mt-2">Add Item</button>
+          <button type="submit" class="btn btn-warning mt-2">Save Changes</button>
         </form>
       </div>
       <div class="container" id="itemDetails" style="background: rgba(255,255,255,0.95); border-radius: 12px; box-shadow: 0 4px 24px rgba(44,83,100,0.2); padding: 2rem; max-width:700px;">
         <div id="itemCard"></div>
+        <hr class="my-4">
+        <div id="reviewsSection">
+          <h4 style="color:#1abc9c; font-family:'Orbitron',monospace;">Reviews</h4>
+          <div id="reviewsSummary" class="mb-3 small text-muted"></div>
+          <div id="reviewsList"></div>
+        </div>
       </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.12.9/dist/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>

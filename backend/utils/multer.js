@@ -2,17 +2,23 @@ const multer = require("multer");
 const path = require("path");
 
 
+const fs = require('fs');
+
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, 'images');
+        const dest = path.join(__dirname, '..', 'images');
+        // Ensure destination directory exists
+        fs.mkdir(dest, { recursive: true }, (err) => {
+            if (err) return cb(err);
+            // Use relative path (images) for saved file.path so our DB normalization works
+            cb(null, dest);
+        });
     },
     filename: function (req, file, cb) {
-
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        const ext = path.extname(file.originalname).toLowerCase(); 
+        const ext = path.extname(file.originalname).toLowerCase();
         let baseName = path.parse(file.originalname).name.replace(/\\/g, '/');
         cb(null, baseName + '-' + uniqueSuffix + ext);
-        
     }
 });
 

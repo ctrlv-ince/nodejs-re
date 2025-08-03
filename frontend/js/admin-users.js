@@ -2,6 +2,47 @@ $(document).ready(function() {
     const url = 'http://localhost:4000/';
     let usersTable;
 
+    // Ensure any order status dropdowns reflect latest enum
+    function ensureOrderStatusDropdown() {
+        const $statusSelect = $('#orderStatus, #editOrderStatus, select.order-status');
+        if ($statusSelect.length) {
+            const statuses = ['pending', 'for_confirm', 'processing', 'shipped', 'completed', 'cancelled'];
+            $statusSelect.each(function() {
+                const $sel = $(this);
+                const current = $sel.val();
+                $sel.empty();
+                statuses.forEach(s => {
+                    const text = s.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase());
+                    $sel.append(`<option value="${s}">${text}</option>`);
+                });
+                if (current && statuses.includes(current)) {
+                    $sel.val(current);
+                }
+            });
+        }
+    }
+
+    // Global: ensure order status dropdown includes the latest enum (pending, for_confirm, processing, shipped, completed, cancelled)
+    // If there is a dropdown in the DOM for order status (admin UI), populate it here.
+    function ensureOrderStatusDropdown() {
+        const $statusSelect = $('#orderStatus, #editOrderStatus, select.order-status');
+        if ($statusSelect.length) {
+            const statuses = ['pending', 'for_confirm', 'processing', 'shipped', 'completed', 'cancelled'];
+            $statusSelect.each(function() {
+                const $sel = $(this);
+                const current = $sel.val();
+                $sel.empty();
+                statuses.forEach(s => {
+                    const text = s.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase());
+                    $sel.append(`<option value="${s}">${text}</option>`);
+                });
+                if (current && statuses.includes(current)) {
+                    $sel.val(current);
+                }
+            });
+        }
+    }
+
     // Check if user is admin
     function checkAdminAccess() {
         const token = sessionStorage.getItem('token');
@@ -245,16 +286,16 @@ $(document).ready(function() {
         });
     });
 
-    // Add new user functionality
-    $('#addUserBtn').on('click', function() {
-        window.location.href = 'register.html';
-    });
-
+    // Remove "Add new user" button behavior (no longer applicable)
+    $('#addUserBtn').remove();
+    
     // Initialize the page
     if (checkAdminAccess()) {
         initializeDataTable();
+        // Populate status dropdowns after table/UI load
+        ensureOrderStatusDropdown();
     }
-
+    
     // Refresh table every 30 seconds
     setInterval(function() {
         if (usersTable) {
