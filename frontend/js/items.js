@@ -248,9 +248,12 @@ $(function () {
     if (!isEdit) {
       const formEl = $('#itemForm')[0];
       const formData = new FormData(formEl);
-      // Ensure group_id is included
+      // Ensure group_id is included (already present via form, but keep robust)
       const gid = $('#group_id').val();
-      if (gid) formData.append('group_id', gid);
+      if (gid && !formData.has('group_id')) formData.append('group_id', gid);
+      // IMPORTANT: do NOT append files again; FormData(formEl) already includes all files under name="images"
+      // Ensure we don't have a stray single-field 'image' that backend no longer expects
+      if (formData.has('image')) formData.delete('image');
 
       $.ajax({
         method: 'POST',
@@ -275,24 +278,23 @@ $(function () {
         }
       });
     } else {
-      const formData = new FormData();
-      formData.append('item_name', $('#item_name').val());
-      formData.append('item_description', $('#item_description').val());
-      formData.append('price', $('#price').val());
-      formData.append('quantity', $('#quantity').val());
+      // Build FormData directly from the form to preserve field names and include multiple files
+      const formEl = $('#itemForm')[0];
+      const formData = new FormData(formEl);
+      // Ensure group_id present from current select value
       const gid = $('#group_id').val();
-      if (gid) formData.append('group_id', gid);
-      const files = $('#images')[0].files;
-      if (files && files.length > 0) {
-        formData.append('image', files[0]);
-      }
+      if (gid && !formData.has('group_id')) formData.append('group_id', gid);
+      // IMPORTANT: do NOT append files again; FormData(formEl) already includes selected files under key "images"
+      // Remove any legacy single 'image' key to avoid backend confusion/duplication
+      if (formData.has('image')) formData.delete('image');
+
       $.ajax({
         url: `${url}api/v1/items/${id}`,
         type: 'PUT',
         data: formData,
         processData: false,
         contentType: false,
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: { toString(){return `Bearer ${token}`;} } }, /* keep stringification robust */
         success: function (resp) {
           if (actionPending === 'update') {
             Swal.fire({ icon: 'success', text: (resp && resp.message) ? resp.message : 'Item updated.' });

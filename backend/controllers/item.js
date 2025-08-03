@@ -139,12 +139,23 @@ exports.updateItem = (req, res) => {
         params.push(price);
     }
 
-    // Normalize uploaded image path (optional)
+    // Normalize uploaded image path(s) (optional)
+    // Support both single file (req.file) and multiple files (req.files as set by upload.array('images', 10))
     let normalizedImagePath = null;
-    if (req.file) {
+    let normalizedImagePaths = [];
+    if (Array.isArray(req.files) && req.files.length > 0) {
+        normalizedImagePaths = req.files.map(f => {
+            const diskPath = f.path.replace(/\\/g, "/");
+            const afterImages = diskPath.split('/images/')[1];
+            return afterImages ? `uploads/${afterImages}` : diskPath.replace(/^images/, 'uploads');
+        });
+        // Keep first as normalizedImagePath for backward-compat with primary update logic
+        normalizedImagePath = normalizedImagePaths[0];
+    } else if (req.file) {
         const diskPath = req.file.path.replace(/\\/g, "/");
         const afterImages = diskPath.split('/images/')[1];
         normalizedImagePath = afterImages ? `uploads/${afterImages}` : diskPath.replace(/^images/, 'uploads');
+        normalizedImagePaths = normalizedImagePath ? [normalizedImagePath] : [];
     }
 
     const upsertGroup = (cb) => {
@@ -176,21 +187,56 @@ exports.updateItem = (req, res) => {
         }
     };
 
+    // After core item/inventory/group updates, handle images:
+    // - If multiple images uploaded, unset current primary, set first uploaded as primary, insert the rest as non-primary.
+    // - If a single image uploaded (legacy), keep behavior: replace/set primary with that image.
     const finalizeWithImage = (done) => {
-        if (!normalizedImagePath) {
+        if ((!normalizedImagePath) && (!normalizedImagePaths || normalizedImagePaths.length === 0)) {
             return done();
         }
-        const unsetPrimarySql = 'UPDATE item_images SET is_primary = 0 WHERE item_id = ? AND is_primary = 1';
-        connection.execute(unsetPrimarySql, [id], (unsetErr) => {
-            if (unsetErr) console.log(unsetErr);
+
+        const doInsertMany = (paths) => {
+            if (!paths || paths.length === 0) return done();
+
+            // First image becomes primary, others are non-primary
+            const first = paths[0];
+            const rest = paths.slice(1);
+
             const insertPrimarySql = `
                 INSERT INTO item_images (item_id, image_path, is_primary)
                 VALUES (?, ?, 1)
             `;
-            connection.execute(insertPrimarySql, [id, normalizedImagePath], (imgErr) => {
-                if (imgErr) console.error('Primary image insert error:', imgErr);
-                return done();
+            connection.execute(insertPrimarySql, [id, first], (imgErr) => {
+                if (imgErr) {
+                    console.error('Primary image insert error:', imgErr);
+                    // Still attempt to insert the rest as non-primary
+                }
+                if (!rest.length) return done();
+
+                const insertNonPrimarySql = `
+                    INSERT INTO item_images (item_id, image_path, is_primary)
+                    VALUES (?, ?, 0)
+                `;
+                let pending = rest.length;
+                rest.forEach(p => {
+                    connection.execute(insertNonPrimarySql, [id, p], (npErr) => {
+                        if (npErr) console.error('Non-primary image insert error:', npErr);
+                        pending -= 1;
+                        if (pending === 0) return done();
+                    });
+                });
             });
+        };
+
+        // Always clear existing primary to ensure a single primary after update
+        const unsetPrimarySql = 'UPDATE item_images SET is_primary = 0 WHERE item_id = ? AND is_primary = 1';
+        connection.execute(unsetPrimarySql, [id], (unsetErr) => {
+            if (unsetErr) console.log('Unset primary error:', unsetErr);
+            if (normalizedImagePaths && normalizedImagePaths.length > 0) {
+                return doInsertMany(normalizedImagePaths);
+            }
+            // Fallback: single legacy path
+            return doInsertMany([normalizedImagePath]);
         });
     };
 

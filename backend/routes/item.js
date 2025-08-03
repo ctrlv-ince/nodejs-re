@@ -21,7 +21,7 @@ router.get('/items/search', searchItems)
 router.get('/items/:id', getSingleItem)
 router.get('/items/:id/images', getItemImages)
 router.post('/items', isAuthenticatedUser, requireAdmin, upload.array('images', 10), createItem);
-router.put('/items/:id', isAuthenticatedUser, requireAdmin, upload.single('image'), updateItem)
+router.put('/items/:id', isAuthenticatedUser, requireAdmin, upload.array('images', 10), updateItem)
 router.delete('/items/:id', isAuthenticatedUser, requireAdmin, deleteItem)
 router.delete('/items/:id/images', isAuthenticatedUser, requireAdmin, deleteItemImage)
 module.exports = router;
