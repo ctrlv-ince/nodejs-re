@@ -24,6 +24,22 @@ $(function() {
       $loginBtn.show();
       $registerBtn.show();
     }
+
+    // Initialize jQuery UI Autocomplete once header and DOM are ready
+    try {
+      if ($.ui && typeof $('#searchInput').autocomplete === 'function') {
+        initAutocomplete();
+      } else {
+        // jQuery UI not present yet; try again shortly
+        setTimeout(function () {
+          if ($.ui && typeof $('#searchInput').autocomplete === 'function') {
+            initAutocomplete();
+          }
+        }, 200);
+      }
+    } catch (e) {
+      console.warn('Autocomplete init deferred:', e);
+    }
   });
   
   // Star renderer for featured/popular cards
@@ -105,47 +121,87 @@ $(function() {
 
   // Search functionality
   let searchTimeout;
-  
-  $('#searchInput').on('input', function() {
-    const searchTerm = $(this).val().trim();
-    
-    // Clear previous timeout
-    clearTimeout(searchTimeout);
-    
-    if (searchTerm.length < 2) {
-      $('#searchResults').empty();
-      return;
-    }
-    
-    // Debounce search requests
-    searchTimeout = setTimeout(function() {
-      performSearch(searchTerm);
-    }, 300);
-  });
-  
-  $('#searchBtn').on('click', function() {
-    const searchTerm = $('#searchInput').val().trim();
-    if (searchTerm.length >= 2) {
-      performSearch(searchTerm);
-    }
-  });
-  
+
+  // Enter key triggers full results render
   $('#searchInput').on('keypress', function(e) {
     if (e.which === 13) { // Enter key
       const searchTerm = $(this).val().trim();
       if (searchTerm.length >= 2) {
         performSearch(searchTerm);
+      } else {
+        $('#searchResults').empty();
       }
     }
   });
-  
+
+  // Explicit search button also triggers full results
+  $('#searchBtn').on('click', function() {
+    const searchTerm = $('#searchInput').val().trim();
+    if (searchTerm.length >= 2) {
+      performSearch(searchTerm);
+    } else {
+      $('#searchResults').empty();
+    }
+  });
+
+  // Initialize Autocomplete behavior
+  function initAutocomplete() {
+    const $input = $('#searchInput');
+    if (!$input.length) return;
+
+    $input.autocomplete({
+      minLength: 1,
+      delay: 200,
+      source: function(request, response) {
+        $.ajax({
+          url: url + 'api/v1/items/search',
+          method: 'GET',
+          data: { term: request.term, limit: 10 },
+          dataType: 'json'
+        }).done(function(res) {
+          // Expecting { rows: [ { item_id, item_name, price, image_path, item_description } ] }
+          const rows = (res && (res.rows || res.items || [])) || [];
+          const mapped = rows.map(function(it) {
+            return {
+              label: it.item_name || it.name || '(no name)',
+              value: it.item_name || it.name || '',
+              id: it.item_id || it.id,
+              price: it.price,
+              image: it.image_path || it.image_url || it.image
+            };
+          });
+          response(mapped);
+        }).fail(function() {
+          response([]);
+        });
+      },
+      select: function(event, ui) {
+        if (ui && ui.item && ui.item.id) {
+          window.location.href = 'item.html?id=' + ui.item.id;
+        }
+      }
+    })
+    // Custom rendering of menu items: show image + name + price
+    .autocomplete('instance')._renderItem = function(ul, item) {
+      const imgSrc = item.image ? (url + item.image) : 'https://via.placeholder.com/40?text=?';
+      const priceHtml = (item.price !== undefined && item.price !== null) ? `<span class="text-muted ml-2">₱${item.price}</span>` : '';
+      return $('<li>')
+        .append(`<div class="d-flex align-items-center">
+                   <img src="${imgSrc}" alt="" style="width:40px;height:40px;object-fit:cover;border-radius:4px;margin-right:8px;">
+                   <span>${item.label}</span>${priceHtml}
+                 </div>`)
+        .appendTo(ul);
+    };
+  }
+
   function performSearch(term) {
     $.ajax({
       url: url + 'api/v1/items/search',
       method: 'GET',
-      data: { term: term },
+      data: { term: term, limit: 12 },
       success: function(data) {
-        displaySearchResults(data.rows);
+        const rows = (data && (data.rows || data.items || [])) || [];
+        displaySearchResults(rows);
       },
       error: function(xhr, status, error) {
         console.error('Search error:', error);
@@ -162,7 +218,7 @@ $(function() {
     } else {
       html = '<div class="row">';
       results.forEach(function(item) {
-        const imgSrc = item.image_path ? (url + item.image_path) : 'https://via.placeholder.com/200x150?text=No+Image';
+        const imgSrc = (item.image_path || item.image) ? (url + (item.image_path || item.image)) : 'https://via.placeholder.com/200x150?text=No+Image';
         html += `
           <div class="col-md-6 mb-3">
             <div class="card">

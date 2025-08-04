@@ -162,7 +162,7 @@ const loginUser = async (req, res) => {
             });
         }
         
-        // Generate short-lived access JWT (do NOT store this in DB)
+        // Generate short-lived access JWT
         const tokenPayload = {
             id: user.user_id,
             email: user.email
@@ -173,12 +173,29 @@ const loginUser = async (req, res) => {
             { expiresIn: process.env.JWT_EXPIRES_IN || '15m' }
         );
 
-        // Generate long-lived refresh token (opaque random), hash it, and store hash in users.remember_token
+        // Generate long-lived refresh token
         const crypto = require('crypto');
         const rawRefresh = crypto.randomBytes(32).toString('base64url'); // raw token returned to client
         const bcryptRounds = parseInt(process.env.BCRYPT_ROUNDS || '10', 10);
         const refreshHash = await bcrypt.hash(rawRefresh, bcryptRounds);
         const refreshTtlDays = parseInt(process.env.REFRESH_TOKEN_DAYS || '30', 10);
+
+        // Log generation 
+        try {
+            const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress || req.ip || 'unknown';
+            const userAgent = req.headers['user-agent'] || 'unknown';
+            console.log('[Auth] Refresh token GENERATED at login', {
+                user_id: user.user_id,
+                email: user.email,
+                ip,
+                userAgent,
+                refresh_token: rawRefresh
+            });
+        } catch (logErr) {
+            // Never break login flow due to logging issues
+            console.error('Failed to log refresh token generation (login):', logErr);
+        }
+
         const updateTokenSql = 'UPDATE users SET remember_token = ?, updated_at = NOW() WHERE user_id = ?';
         connection.execute(updateTokenSql, [refreshHash, user.user_id], (tokenErr) => {
             if (tokenErr) {
@@ -190,7 +207,7 @@ const loginUser = async (req, res) => {
         // Remove password from response
         delete user.password;
 
-        // Return both tokens; recommend sending refresh via HttpOnly cookie on client
+        // Return both tokens
         return res.status(200).json({
             success: true,
             message: "Login successful",
@@ -208,8 +225,8 @@ const loginUser = async (req, res) => {
 };
 
 // POST /api/v1/auth/refresh
-// Body: { refresh_token }  (from client storage or HttpOnly cookie if used)
-// Returns: new short-lived access token; optionally rotates refresh token
+// Body: { refresh_token } 
+// Returns: new short-lived access token
 const refreshToken = async (req, res) => {
     try {
         const { refresh_token } = req.body || {};
@@ -228,7 +245,6 @@ const refreshToken = async (req, res) => {
             }
 
             // Since remember_token is a hash, we need to compare against all candidates.
-            // For scale, you would store a token id (jti) to look up a single row.
             let matchedUser = null;
             for (const row of rows) {
                 const ok = await bcrypt.compare(provided, row.remember_token);
@@ -254,6 +270,21 @@ const refreshToken = async (req, res) => {
             const rawRefresh = crypto.randomBytes(32).toString('base64url');
             const bcryptRounds = parseInt(process.env.BCRYPT_ROUNDS || '10', 10);
             const newHash = await bcrypt.hash(rawRefresh, bcryptRounds);
+
+            // Log rotation with context (includes raw token as requested)
+            try {
+                const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress || req.ip || 'unknown';
+                const userAgent = req.headers['user-agent'] || 'unknown';
+                console.log('[Auth] Refresh token ROTATED at refresh', {
+                    user_id: matchedUser.user_id,
+                    email: matchedUser.email,
+                    ip,
+                    userAgent,
+                    refresh_token: rawRefresh
+                });
+            } catch (logErr) {
+                console.error('Failed to log refresh token rotation:', logErr);
+            }
 
             const upd = 'UPDATE users SET remember_token = ?, updated_at = NOW() WHERE user_id = ?';
             connection.execute(upd, [newHash, matchedUser.user_id], (uErr) => {
