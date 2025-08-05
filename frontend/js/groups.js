@@ -1,9 +1,3 @@
-/**
- * Groups management page logic
- * - Requires admin (token) — backend should protect group routes for writes
- * - CRUD for groups via /api/v1/groups
- * - Assign items to groups via a simple POST (you can extend on backend)
- */
 $(function () {
   const url = 'http://localhost:4000/';
 
@@ -41,41 +35,58 @@ $(function () {
     return token;
   }
 
-  // Load groups into table and select
+  // Reusable initializer for DataTables on Groups table
+  // initializeGroupsDataTable no longer needed; initialization is done fresh in loadGroups()
+  function initializeGroupsDataTable() { /* deprecated */ }
+
+  // Load groups into table and select, then initialize DataTable
   function loadGroups() {
     $.get(`${url}api/v1/groups`, function (rows) {
-      // rows expected to be an array from backend/controllers/group.js getAllGroups
-      const tbody = $('#groupsTable tbody');
-      tbody.empty();
-      const sel = $('#assign_group');
-      sel.empty();
+      const $table = $('#groupsTable');
+      const $tbody = $table.find('tbody');
+      const $sel = $('#assign_group');
+
+      // Reset UI
+      $tbody.empty();
+      $sel.empty();
 
       if (!rows || rows.length === 0) {
-        tbody.append('<tr><td colspan="4" class="text-center text-muted">No groups.</td></tr>');
+        // Use a proper placeholder row
+        $tbody.append('<tr><td colspan="4" class="text-center text-muted">No groups.</td></tr>');
+        initializeGroupsDataTable();
         return;
       }
 
       rows.forEach((g) => {
-        // Table
-        const tr = $(`
-          <tr>
-            <td>${g.group_id}</td>
-            <td>${g.group_name || ''}</td>
-            <td>${g.group_description || ''}</td>
-            <td>
-              <button class="btn btn-sm btn-outline-primary edit-group" data-id="${g.group_id}">Edit</button>
-              <button class="btn btn-sm btn-outline-danger delete-group" data-id="${g.group_id}">Delete</button>
-            </td>
-          </tr>
-        `);
-        tbody.append(tr);
-
-        // Select
-        sel.append(`<option value="${g.group_id}">${g.group_name}</option>`);
+        // Ensure exactly 4 <td> cells per row to match the 4 <th> columns
+        const name = (g.group_name || '').toString().replace(/</g,'<').replace(/>/g,'>');
+        const desc = (g.group_description || '').toString().replace(/</g,'<').replace(/>/g,'>');
+        $tbody.append(
+          '<tr>' +
+            `<td>${g.group_id}</td>` +
+            `<td>${name}</td>` +
+            `<td>${desc}</td>` +
+            '<td>' +
+              `<button class="btn btn-sm btn-outline-primary edit-group" data-id="${g.group_id}">Edit</button> ` +
+              `<button class="btn btn-sm btn-outline-danger delete-group" data-id="${g.group_id}">Delete</button>` +
+            '</td>' +
+          '</tr>'
+        );
+        $sel.append(`<option value="${g.group_id}">${g.group_name}</option>`);
       });
+
+      // Initialize or re-initialize the DataTable after populating rows
+      initializeGroupsDataTable();
+      if ($.fn.DataTable && $.fn.DataTable.isDataTable($table)) {
+        const dt = $table.DataTable();
+        dt.columns.adjust();
+        if (dt.responsive && dt.responsive.recalc) dt.responsive.recalc();
+      }
     }).fail((xhr) => {
       console.error('Load groups error:', xhr?.responseJSON || xhr);
       $('#groupsTable tbody').html('<tr><td colspan="4" class="text-center text-danger">Failed to load groups.</td></tr>');
+      // Instantiate DataTable to keep search/paging UI visible even on error
+      initializeGroupsDataTable();
     });
   }
 
@@ -202,6 +213,13 @@ $(function () {
   $('#refreshGroupItems').on('click', function () {
     // Placeholder: implement GET /api/v1/item-groups to list assignments
     $('#groupItemsTable tbody').html('<tr><td colspan="3" class="text-center text-muted">Not implemented yet.</td></tr>');
+  });
+
+  // Ensure DataTable is available after DOM-ready in case of very fast responses
+  $(document).ready(function () {
+    if ($.fn.DataTable) {
+      initializeGroupsDataTable();
+    }
   });
 
   // Initial loads

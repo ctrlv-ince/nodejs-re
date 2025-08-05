@@ -56,3 +56,33 @@ exports.updateGroup = (req, res) => {
         return res.status(200).json({ success: true });
     });
 };
+
+/**
+ * DELETE /api/v1/groups/:id
+ */
+exports.deleteGroup = (req, res) => {
+    const id = parseInt(req.params.id, 10);
+    if (!id) {
+        return res.status(400).json({ success: false, message: 'Invalid group id' });
+    }
+
+    // If there is a linking table (item_groups) referencing this group, we should remove those rows first
+    const deleteItemGroupsSql = 'DELETE FROM item_groups WHERE group_id = ?';
+    connection.execute(deleteItemGroupsSql, [id], (dgErr) => {
+        if (dgErr && dgErr.code !== 'ER_NO_REFERENCED_ROW_2') {
+            // Continue even if no referencing table; but if error, report
+            console.warn('Warning deleting item_groups for group:', id, dgErr);
+        }
+        const deleteGroupSql = 'DELETE FROM groups WHERE group_id = ?';
+        connection.execute(deleteGroupSql, [id], (err, result) => {
+            if (err) {
+                console.error('Delete group error:', err);
+                return res.status(500).json({ success: false, message: 'Delete failed', error: err.code || err.message });
+            }
+            if (result.affectedRows === 0) {
+                return res.status(404).json({ success: false, message: 'Group not found' });
+            }
+            return res.status(200).json({ success: true, message: 'Group deleted', group_id: id });
+        });
+    });
+};

@@ -36,7 +36,23 @@ $(function () {
   });
 
   const $tableBody = $('#itemsTable tbody');
+  const $table = $('#itemsTable');
+  let itemsDT = null;
   const token = sessionStorage.getItem('token');
+
+  function normalizeItemsTableHeader() {
+    $table.find('thead').html(`
+      <tr>
+        <th style="width: 70px;">ID</th>
+        <th>Name</th>
+        <th style="width: 25%;">Description</th>
+        <th style="width: 100px;">Price</th>
+        <th style="width: 90px;">Qty</th>
+        <th>Group</th>
+        <th style="width: 160px;">Actions</th>
+      </tr>
+    `);
+  }
 
   function imgTagOrPlaceholder(imagePath, alt) {
     const src = imagePath ? (url + imagePath) : 'https://via.placeholder.com/80x60?text=No+Image';
@@ -70,29 +86,84 @@ $(function () {
     });
   }
 
+  // Initialize or reinitialize DataTable for items
+  function initializeItemsDataTable() {
+    if (!$.fn.DataTable) return;
+
+    if ($.fn.DataTable.isDataTable($table)) {
+      $table.DataTable().clear().destroy(true);
+      $table.find('thead').html(`
+        <tr>
+          <th style="width: 70px;">ID</th>
+          <th>Name</th>
+          <th style="width: 25%;">Description</th>
+          <th style="width: 100px;">Price</th>
+          <th style="width: 90px;">Qty</th>
+          <th>Group</th>
+          <th style="width: 160px;">Actions</th>
+        </tr>
+      `);
+    }
+
+    itemsDT = $table.DataTable({
+      responsive: true,
+      pageLength: 10,
+      lengthChange: false,
+      order: [[0, 'desc']],
+      autoWidth: false,
+      columnDefs: [
+        { orderable: false, targets: [6] } // Actions
+      ],
+      language: {
+        search: 'Search items:',
+        emptyTable: 'No items available',
+        info: 'Showing _START_ to _END_ of _TOTAL_ items',
+        infoEmpty: 'Showing 0 to 0 of 0 items'
+      },
+      deferLoading: null
+    });
+  }
+
   function fetchItems() {
     $.get(`${url}api/v1/items`, function (data) {
       const rows = data.rows || [];
+      // Reset body
       $tableBody.empty();
+
+      if (!rows.length) {
+        $tableBody.append('<tr><td colspan="7" class="text-center text-muted">No items found.</td></tr>');
+        initializeItemsDataTable();
+        if (itemsDT) { itemsDT.columns.adjust(); if (itemsDT.responsive) itemsDT.responsive.recalc(); }
+        return;
+      }
+
       rows.forEach(function (row) {
-        const tr = `
-          <tr data-id="${row.item_id}">
-            <td>${row.item_id}</td>
-            <td>${row.item_name}</td>
-            <td class="text-truncate" style="max-width: 320px;" title="${row.item_description}">${row.item_description}</td>
-            <td>₱ ${Number(row.price).toFixed(2)}</td>
-            <td>${row.quantity ?? row.qty ?? ''}</td>
-            <td>${row.group_name || '-'}</td>
-            <td>
-              <div class="btn-group btn-group-sm">
-                <button class="btn btn-warning btn-edit" type="button">Edit Item</button>
-                <button class="btn btn-outline-danger btn-delete">Delete</button>
-              </div>
-            </td>
-          </tr>
-        `;
+        const tr = $('<tr>').attr('data-id', row.item_id);
+        tr.append(`<td>${row.item_id}</td>`);
+        tr.append(`<td>${row.item_name}</td>`);
+        tr.append(`<td class="text-truncate" style="max-width: 320px;" title="${row.item_description}">${row.item_description}</td>`);
+        tr.append(`<td>₱ ${Number(row.price).toFixed(2)}</td>`);
+        tr.append(`<td>${row.quantity ?? row.qty ?? ''}</td>`);
+        tr.append(`<td>${row.group_name || '-'}</td>`);
+        tr.append(`
+          <td>
+            <div class="btn-group btn-group-sm">
+              <button class="btn btn-warning btn-edit" type="button">Edit Item</button>
+              <button class="btn btn-outline-danger btn-delete" type="button">Delete</button>
+            </div>
+          </td>
+        `);
         $tableBody.append(tr);
       });
+
+      // Initialize DataTable after rows are in place
+      initializeItemsDataTable();
+      try {
+        if (itemsDT) {
+          itemsDT.columns.adjust();
+          if (itemsDT.responsive && itemsDT.responsive.recalc) itemsDT.responsive.recalc();
+        }
+      } catch (_) {}
     }).fail(function (xhr) {
       console.error('Fetch items error:', xhr);
       Swal.fire({ icon: 'error', text: 'Failed to load items.' });
@@ -189,8 +260,9 @@ $(function () {
         url: `${url}api/v1/items/${id}`,
         headers: { Authorization: `Bearer ${token}` },
         success: function () {
-          Swal.fire({ icon: 'success', text: 'Item deleted.' });
-          fetchItems();
+          // Keep table visible in a controlled state
+          // Simple and robust: full page refresh to reset DataTables state
+          window.location.reload();
         },
         error: function (xhr) {
           console.error(xhr);
@@ -262,13 +334,19 @@ $(function () {
         processData: false,
         contentType: false,
         headers: { Authorization: `Bearer ${token}` },
-        success: function () {
-          if (actionPending === 'update') {
-            Swal.fire({ icon: 'success', text: 'Item created.' });
-          }
-          $('#itemModal').modal('hide');
-          actionPending = null;
-          fetchItems();
+        success: function (resp) {
+          // Show success toast BEFORE any reload so it's visible
+          Swal.fire({
+            icon: 'success',
+            text: (resp && (resp.message || resp.success)) ? (resp.message || 'Item created.') : 'Item created.',
+            timer: 1200,
+            showConfirmButton: false
+          }).then(() => {
+            $('#itemModal').modal('hide');
+            actionPending = null;
+            // Keep it simple and robust: refresh the page so DataTables is clean
+            window.location.reload();
+          });
         },
         error: function (xhr) {
           console.error(xhr);
@@ -296,12 +374,22 @@ $(function () {
         contentType: false,
         headers: { Authorization: { toString(){return `Bearer ${token}`;} } }, /* keep stringification robust */
         success: function (resp) {
-          if (actionPending === 'update') {
-            Swal.fire({ icon: 'success', text: (resp && resp.message) ? resp.message : 'Item updated.' });
-          }
+          // Close modal and stop any pending state
           $('#itemModal').modal('hide');
           actionPending = null;
-          fetchItems();
+
+          // Show success toast BEFORE refreshing so user sees confirmation
+          const msg = (resp && (resp.message || resp.success)) ? (resp.message || 'Item updated.') : 'Item updated.';
+          Swal.fire({
+            icon: 'success',
+            text: msg,
+            timer: 1000,
+            showConfirmButton: false,
+            willClose: () => {
+              // Refresh page after toast closes
+              window.location.reload();
+            }
+          });
         },
         error: function (xhr) {
           console.error('Update error:', xhr);
