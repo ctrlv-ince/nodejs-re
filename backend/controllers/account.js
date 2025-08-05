@@ -53,7 +53,7 @@ exports.getAccount = (req, res) => {
     });
 };
 
-// Create account (admin only path) - expects valid user_id
+// Create account 
 exports.createAccount = (req, res) => {
     const { user_id, username, password, role, profile_img, account_status } = req.body;
     const sql = 'INSERT INTO accounts (user_id, username, password, role, profile_img, account_status, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())';
@@ -63,7 +63,7 @@ exports.createAccount = (req, res) => {
     });
 };
 
-// Update account (safe: only update provided fields; avoid undefined bindings)
+// Update account 
 exports.updateAccount = (req, res) => {
     try {
         const accountId = req.params.id;

@@ -94,19 +94,61 @@ exports.requireAdminOrOwner = (req, res, next) => {
             }
 
             const user = results[0];
-            const resourceUserId = req.params.userId || req.body.userId || req.params.id;
-            
-            // Allow if admin or if accessing own resource
-            if (user.role === 'admin' || decoded.id == resourceUserId) {
-                req.user = { 
-                    id: decoded.id, 
+            const safeBody = req.body || {};
+            const resourceUserId = req.params.userId || safeBody.userId || req.params.id;
+
+            // If admin, allow immediately
+            if (user.role === 'admin') {
+                req.user = {
+                    id: decoded.id,
                     role: user.role,
                     status: user.account_status
                 };
-                next();
-            } else {
-                return res.status(403).json({ message: 'Access denied' });
+                return next();
             }
+
+            // Special-case: deleting a review (/reviews/:review_id)
+            if (req.params && req.params.review_id) {
+                const reviewId = parseInt(req.params.review_id);
+                if (!reviewId) {
+                    return res.status(400).json({ message: 'Invalid review id' });
+                }
+                // Map token user -> account and compare to review's account_id
+                const mapSql = 'SELECT account_id FROM accounts WHERE user_id = ?';
+                connection.execute(mapSql, [decoded.id], (mErr, mRows) => {
+                    if (mErr || !mRows || mRows.length === 0) {
+                        return res.status(403).json({ message: 'Access denied' });
+                    }
+                    const accountId = mRows[0].account_id;
+                    const revSql = 'SELECT account_id FROM reviews WHERE review_id = ?';
+                    connection.execute(revSql, [reviewId], (rErr, rRows) => {
+                        if (rErr || !rRows || rRows.length === 0) {
+                            return res.status(404).json({ message: 'Review not found' });
+                        }
+                        const reviewAccountId = rRows[0].account_id;
+                        if (String(reviewAccountId) === String(accountId)) {
+                            req.user = {
+                                id: decoded.id,
+                                role: user.role,
+                                status: user.account_status
+                            };
+                            return next();
+                        }
+                        return res.status(403).json({ message: 'Access denied' });
+                    });
+                });
+                return;
+            }
+            if (resourceUserId && String(decoded.id) === String(resourceUserId)) {
+                req.user = {
+                    id: decoded.id,
+                    role: user.role,
+                    status: user.account_status
+                };
+                return next();
+            }
+
+            return res.status(403).json({ message: 'Access denied' });
         });
     } catch (error) {
         return res.status(401).json({ message: 'Invalid token' });

@@ -286,7 +286,6 @@ $(document).ready(function() {
         });
     });
 
-    // Remove "Add new user" button behavior (no longer applicable)
     $('#addUserBtn').remove();
     
     // Initialize the page

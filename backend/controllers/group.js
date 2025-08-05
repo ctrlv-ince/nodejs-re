@@ -17,8 +17,6 @@ exports.createGroup = (req, res) => {
 
 /**
  * Partial update for a group
- * PUT /api/v1/groups/:id
- * Body can include any of: { group_name?, group_description? }
  */
 exports.updateGroup = (req, res) => {
     const id = parseInt(req.params.id, 10);
@@ -58,4 +56,3 @@ exports.updateGroup = (req, res) => {
         return res.status(200).json({ success: true });
     });
 };
-// ... (other CRUD for groups, item_groups, item_images)

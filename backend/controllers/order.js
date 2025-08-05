@@ -426,6 +426,53 @@ exports.updateOrder = async (req, res) => {
 
         // Update status on header if provided
         if (hasStatus) {
+            // If moving to 'completed' and not already completed, enforce inventory decrement
+            const newStatus = String(status).toLowerCase();
+            if (newStatus === 'completed') {
+                const [[cur]] = await conn.query('SELECT status FROM orders WHERE order_id = ? FOR UPDATE', [orderinfo_id]);
+                const currentStatus = cur ? String(cur.status || '').toLowerCase() : '';
+                if (currentStatus !== 'completed') {
+                    // Load lines
+                    const [linesForInv] = await conn.execute(
+                        `SELECT oi.item_id, oi.quantity
+                         FROM orderinfos oi
+                         WHERE oi.order_id = ?`,
+                        [orderinfo_id]
+                    );
+                    if (!Array.isArray(linesForInv) || linesForInv.length === 0) {
+                        await conn.rollback();
+                        conn.release();
+                        return res.status(400).json({ success: false, message: 'No order lines to complete' });
+                    }
+                    // Check all inventories (lock)
+                    for (const l of linesForInv) {
+                        const iid = parseInt(l.item_id);
+                        const qty = parseInt(l.quantity) || 0;
+                        if (!iid || qty <= 0) {
+                            await conn.rollback();
+                            conn.release();
+                            return res.status(400).json({ success: false, message: 'Invalid line item in order' });
+                        }
+                        const [invRows] = await conn.execute('SELECT quantity FROM inventories WHERE item_id = ? FOR UPDATE', [iid]);
+                        const available = invRows.length ? parseInt(invRows[0].quantity) || 0 : 0;
+                        if (available < qty) {
+                            await conn.rollback();
+                            conn.release();
+                            return res.status(409).json({
+                                success: false,
+                                message: 'Insufficient inventory to complete order',
+                                details: { item_id: iid, required: qty, available }
+                            });
+                        }
+                    }
+                    // Apply decrements
+                    for (const l of linesForInv) {
+                        const iid = parseInt(l.item_id);
+                        const qty = parseInt(l.quantity) || 0;
+                        await conn.execute('UPDATE inventories SET quantity = quantity - ?, updated_at = NOW() WHERE item_id = ?', [qty, iid]);
+                    }
+                }
+            }
             await conn.execute('UPDATE orders SET status = ?, updated_at = NOW() WHERE order_id = ?', [status, orderinfo_id]);
         }
 
@@ -540,7 +587,6 @@ exports.updateOrder = async (req, res) => {
     }
 
     // Validate inputs
-    // Legacy validation block (not used in promise-based path). Keep enum aligned just in case.
     const validStatuses = ['pending', 'for_confirm', 'processing', 'shipped', 'completed', 'cancelled'];
     const hasStatus = typeof status === 'string';
     if (hasStatus && !validStatuses.includes(status)) {
@@ -691,23 +737,90 @@ exports.updateOrder = async (req, res) => {
  * PUT /api/v1/orders/:id/status (admin-only)
  * Body: { status: 'pending'|'shipped'|'for_confirm'|'completed'|'cancelled' }
  */
-exports.updateOrderStatus = (req, res) => {
+exports.updateOrderStatus = async (req, res) => {
     const orderId = parseInt(req.params.id);
     const { status } = req.body || {};
-    // Align with DB enum including 'for_confirm'
     const allowed = ['pending','for_confirm','processing','shipped','completed','cancelled'];
-
     const normalized = String(status || '').toLowerCase();
+
     if (!orderId || !allowed.includes(normalized)) {
         return res.status(400).json({ success: false, error: `Invalid status. Allowed: ${allowed.join(', ')}` });
     }
 
-    const sql = 'UPDATE orders SET status = ?, updated_at = NOW() WHERE order_id = ?';
-    connection.execute(sql, [normalized, orderId], (err, result) => {
-        if (err) return res.status(500).json({ success: false, error: 'update order status error', details: err });
-        if (result.affectedRows === 0) return res.status(404).json({ success: false, error: 'Order not found' });
-        return res.status(200).json({ success: true, order_id: orderId, status: normalized });
-    });
+    const { poolPromise } = require('../config/database');
+    const conn = await poolPromise.getConnection();
+    try {
+        await conn.beginTransaction();
+
+        // Get current status first
+        const [curRows] = await conn.execute('SELECT status FROM orders WHERE order_id = ? FOR UPDATE', [orderId]);
+        if (!curRows.length) {
+            await conn.rollback();
+            conn.release();
+            return res.status(404).json({ success: false, error: 'Order not found' });
+        }
+        const currentStatus = String(curRows[0].status || '').toLowerCase();
+
+        // If transitioning to completed and was not previously completed, enforce inventory decrement
+        const willDecrement = (normalized === 'completed' && currentStatus !== 'completed');
+
+        if (willDecrement) {
+            // Load line items
+            const [lines] = await conn.execute(
+                `SELECT oi.item_id, oi.quantity
+                 FROM orderinfos oi
+                 WHERE oi.order_id = ?`,
+                [orderId]
+            );
+
+            if (!lines.length) {
+                await conn.rollback();
+                conn.release();
+                return res.status(400).json({ success: false, error: 'No order lines to complete' });
+            }
+
+            // Check availability for all items (lock rows)
+            for (const l of lines) {
+                const iid = parseInt(l.item_id);
+                const qty = parseInt(l.quantity) || 0;
+                if (!iid || qty <= 0) {
+                    await conn.rollback();
+                    conn.release();
+                    return res.status(400).json({ success: false, error: 'Invalid line item in order' });
+                }
+                const [invRows] = await conn.execute('SELECT quantity FROM inventories WHERE item_id = ? FOR UPDATE', [iid]);
+                const available = invRows.length ? parseInt(invRows[0].quantity) || 0 : 0;
+                if (available < qty) {
+                    await conn.rollback();
+                    conn.release();
+                    return res.status(409).json({
+                        success: false,
+                        error: 'Insufficient inventory to complete order',
+                        details: { item_id: iid, required: qty, available }
+                    });
+                }
+            }
+
+            // Decrement inventory for each item
+            for (const l of lines) {
+                const iid = parseInt(l.item_id);
+                const qty = parseInt(l.quantity) || 0;
+                // Ensure inventory row exists; if not, treat as 0 and block above already handled
+                await conn.execute('UPDATE inventories SET quantity = quantity - ? , updated_at = NOW() WHERE item_id = ?', [qty, iid]);
+            }
+        }
+
+        // Update status regardless (after successful decrement if needed)
+        await conn.execute('UPDATE orders SET status = ?, updated_at = NOW() WHERE order_id = ?', [normalized, orderId]);
+
+        await conn.commit();
+        conn.release();
+        return res.status(200).json({ success: true, order_id: orderId, status: normalized, inventory_decremented: !!willDecrement });
+    } catch (err) {
+        try { await conn.rollback(); } catch (_) {}
+        conn.release();
+        return res.status(500).json({ success: false, error: 'update order status error', details: err.message || err });
+    }
 };
 
 /**

@@ -41,48 +41,74 @@ $(function () {
     return token;
   }
 
-  // Render table rows
+  // DataTable instance handle
+  let ordersDT = null;
+
+  // Render table rows and (re)initialize DataTable
   function renderRows(rows) {
-    const tbody = $('#ordersTable tbody');
-    tbody.empty();
-    if (!rows || rows.length === 0) {
-      tbody.append(
-        '<tr><td colspan="5" class="text-center text-muted">No orders found.</td></tr>'
-      );
-      return;
+    const $table = $('#ordersTable');
+    const $tbody = $table.find('tbody');
+
+    // If DataTable already initialized, destroy before re-render to avoid duplication
+    if ($.fn.DataTable && $.fn.DataTable.isDataTable($table)) {
+      $table.DataTable().clear().destroy();
     }
-    rows.forEach((r) => {
-      // Support new and legacy field names
-      const id = r.order_no ?? r.order_id ?? r.id ?? r.orderinfo_id ?? '';
-      const user =
-        r.user ||
-        r.customer_name ||
-        ((r.first_name || r.last_name) ? `${r.first_name || ''} ${r.last_name || ''}`.trim() : '') ||
-        r.user_name ||
-        'User';
-      const placedRaw = (r.date_ordered ?? r.date_placed ?? r.date) || '';
-      const placed = placedRaw ? new Date(placedRaw).toLocaleString() : '';
-      const status = r.status || 'processing';
-      const row = `
-        <tr data-id="${id}">
-          <td>#${id}</td>
-          <td>${user}</td>
-          <td>${placed}</td>
-          <td>
-            <select class="form-control form-control-sm order-status">
-              <option value="processing" ${status === 'processing' ? 'selected' : ''}>processing</option>
-              <option value="shipped" ${status === 'shipped' ? 'selected' : ''}>shipped</option>
-              <option value="completed" ${status === 'completed' ? 'selected' : ''}>completed</option>
-              <option value="cancelled" ${status === 'cancelled' ? 'selected' : ''}>cancelled</option>
-            </select>
-          </td>
-          <td>
-            <button class="btn btn-sm btn-primary save-order">Save</button>
-          </td>
-        </tr>
-      `;
-      tbody.append(row);
-    });
+
+    $tbody.empty();
+    if (!rows || rows.length === 0) {
+      $tbody.append('<tr><td colspan="5" class="text-center text-muted">No orders found.</td></tr>');
+    } else {
+      rows.forEach((r) => {
+        const id = r.order_no ?? r.order_id ?? r.id ?? r.orderinfo_id ?? '';
+        const user =
+          r.user ||
+          r.customer_name ||
+          ((r.first_name || r.last_name) ? `${r.first_name || ''} ${r.last_name || ''}`.trim() : '') ||
+          r.user_name ||
+          'User';
+        const placedRaw = (r.date_ordered ?? r.date_placed ?? r.date) || '';
+        const placed = placedRaw ? new Date(placedRaw).toLocaleString() : '';
+        const status = r.status || 'processing';
+        const row = `
+          <tr data-id="${id}">
+            <td>#${id}</td>
+            <td>${user}</td>
+            <td>${placed}</td>
+            <td>
+              <select class="form-control form-control-sm order-status">
+                <option value="processing" ${status === 'processing' ? 'selected' : ''}>processing</option>
+                <option value="shipped" ${status === 'shipped' ? 'selected' : ''}>shipped</option>
+                <option value="completed" ${status === 'completed' ? 'selected' : ''}>completed</option>
+                <option value="cancelled" ${status === 'cancelled' ? 'selected' : ''}>cancelled</option>
+              </select>
+            </td>
+            <td>
+              <button class="btn btn-sm btn-primary save-order">Save</button>
+            </td>
+          </tr>
+        `;
+        $tbody.append(row);
+      });
+    }
+
+    // Initialize DataTable with Bootstrap 4 styling and responsive
+    if ($.fn.DataTable) {
+      ordersDT = $table.DataTable({
+        responsive: true,
+        pageLength: 10,
+        lengthChange: false,
+        order: [[0, 'desc']],
+        language: {
+          search: 'Search:',
+          emptyTable: 'No orders available',
+          info: 'Showing _START_ to _END_ of _TOTAL_ orders',
+          infoEmpty: 'Showing 0 to 0 of 0 orders',
+        },
+        columnDefs: [
+          { orderable: false, targets: [3, 4] } // disable sorting on Status and Action
+        ]
+      });
+    }
   }
 
   // Load orders (requires backend list endpoint GET /api/v1/orders)
@@ -97,6 +123,10 @@ $(function () {
       success: function (resp) {
         const rows = (resp && (resp.rows || resp.data)) || [];
         renderRows(rows);
+        // If server paginates and returns fewer than requested, still allow client-side paging
+        if ($.fn.DataTable && $.fn.DataTable.isDataTable('#ordersTable')) {
+          $('#ordersTable').DataTable().columns.adjust().responsive.recalc();
+        }
       },
       error: function () {
         // If list endpoint not available, show placeholder row

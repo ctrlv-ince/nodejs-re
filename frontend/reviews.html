@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Reviews - Bit & Board</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css"
+      integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
+      crossorigin="anonymous"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.16.1/sweetalert2.css"
+      integrity="sha512-fjO3Vy3QodX9c6G9AUmr6WuIaEPdGRxBjD7gjatG5gGylzYyrEq3U0q+smkG6CwIY0L8XALRFHh4KPHig0Q1ug=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <style>
+      body {
+        background: #0f2027;
+        background: linear-gradient(135deg, #2c5364 0%, #203a43 50%, #0f2027 100%);
+        min-height: 100vh;
+        font-family: 'Roboto Mono','Consolas',monospace;
+      }
+      .card-header {
+        background: #ffffff;
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+      }
+      .table thead th {
+        border-top: none;
+        border-bottom: 2px solid rgba(0,0,0,0.06);
+      }
+      .review-stars {
+        color: #f1c40f;
+        letter-spacing: 1px;
+        font-size: 14px;
+      }
+      .badge-soft {
+        background: rgba(26, 188, 156, 0.12);
+        color: #16a085;
+        border: 1px solid rgba(26, 188, 156, 0.35);
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Consistent header container (matches other pages) -->
+    <div id="home"></div>
+
+    <div class="container" style="background: rgba(255,255,255,0.95); border-radius: 12px; box-shadow: 0 4px 24px rgba(44,83,100,0.2); padding: 2rem; margin-top: 3rem;">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 style="color: #1abc9c; font-family: 'Orbitron','Roboto Mono',monospace; letter-spacing: 2px; text-shadow: 0 2px 8px #203a43;">Reviews</h2>
+        <div>
+          <a href="dashboard.html" class="btn btn-outline-secondary mr-2">Back to Dashboard</a>
+          <a href="items.html" class="btn btn-info text-white">Manage Items</a>
+        </div>
+      </div>
+
+      <div class="card mb-4">
+        <div class="card-header d-flex align-items-center">
+          <input type="text" class="form-control form-control-sm mr-2" id="searchBox" placeholder="Search by comment, username or item id" style="max-width:380px;">
+          <button class="btn btn-primary btn-sm" id="btnSearch">Search</button>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table mb-0" id="reviewsTable">
+              <thead class="thead-light">
+                <tr>
+                  <th style="width:80px;">Review ID</th>
+                  <th style="width:90px;">Item ID</th>
+                  <th>User</th>
+                  <th style="width:140px;">Rating</th>
+                  <th>Comment</th>
+                  <th style="width:180px;">Created</th>
+                  <th style="width:160px;">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td colspan="7" class="text-center text-muted p-4">Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card-footer d-flex justify-content-between align-items-center">
+          <div id="summary" class="small text-muted"></div>
+          <div>
+            <button class="btn btn-sm btn-outline-secondary" id="prevPage">Prev</button>
+            <span class="mx-2 small" id="pageInfo">Page 1</span>
+            <button class="btn btn-sm btn-outline-secondary" id="nextPage">Next</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Match script ordering used by other pages for reliable header load -->
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/js/bootstrap.min.js"
+      integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.16.1/sweetalert2.min.js"
+      integrity="sha512-LGHBR+kJ5jZSIzhhdfytPoEHzgaYuTRifq9g5l6ja6/k9NAOsAi5dQh4zQF6JIRB8cAYxTRedERUF+97/KuivQ=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
+    <script>
+      (function(){
+        // Define globals first to avoid "url is not defined"
+        var url = 'http://localhost:4000/';
+        var PAGE_SIZE = 10;
+        // Guard: ensure Authorization header will be stringified correctly on all AJAX calls
+        $.ajaxSetup({
+          beforeSend: function(xhr) {
+            // no-op, explicit per-call headers used
+          }
+        });
+
+        // Load header the same way other pages do, and ensure logout link behavior
+        $("#home").load("header.html", function () {
+          // If logged-in, adjust header login link to logout (consistent with dashboard logic)
+          if (sessionStorage.getItem('userId')) {
+            const $loginLink = $('a.nav-link[href="login.html"]');
+            $loginLink.text('Logout').attr({ 'href': '#', 'id': 'logout-link' }).on('click', function (e) {
+              e.preventDefault();
+              sessionStorage.clear();
+              window.location.href = 'login.html';
+            });
+          }
+          // Highlight active link if present
+          const nav = $('.navbar-nav a[href="reviews.html"]');
+          if (nav.length) nav.addClass('active');
+        });
+
+        // Avoid referencing url before it's declared in any helper
+        function renderStars(rating) {
+          const r = Math.max(0, Math.min(5, Number(rating) || 0));
+          const full = Math.floor(r);
+          const half = r - full >= 0.25 && r - full < 0.75 ? 1 : 0;
+          const adjFull = half ? full : Math.round(r);
+          const empties = 5 - (adjFull + half);
+          const fullStars = '★'.repeat(adjFull);
+          const halfStar = half ? '☆' : '';
+          const emptyStars = '☆'.repeat(empties);
+          return '<span class="review-stars">'+fullStars+halfStar+emptyStars+'</span>';
+        }
+
+        let allRows = [];
+        let page = 1;
+
+        function applySearch() {
+          const kwRaw = ($('#searchBox').val() || '').toLowerCase().trim();
+          if (!kwRaw) return allRows.slice();
+          return allRows.filter(r => {
+            const c = (r.comment || '').toLowerCase();
+            const u = (r.username || ('account #' + (r.account_id || ''))).toLowerCase();
+            const itemStr = String(r.item_id || '');
+            return c.includes(kwRaw) || u.includes(kwRaw) || itemStr.includes(kwRaw);
+          });
+        }
+
+        function renderTable() {
+          const rows = applySearch();
+          const total = rows.length;
+          const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+          if (page > pages) page = pages;
+
+          const start = (page - 1) * PAGE_SIZE;
+          const slice = rows.slice(start, start + PAGE_SIZE);
+
+          const $tb = $('#reviewsTable tbody');
+          if (slice.length === 0) {
+            $tb.html('<tr><td colspan="7" class="text-center text-muted p-4">No reviews found.</td></tr>');
+          } else {
+            const html = slice.map(r => {
+              const created = r.created_at ? new Date(r.created_at).toLocaleString() : '';
+              const user = r.username ? r.username : (r.account_id ? ('Account #'+r.account_id) : 'Unknown');
+              const stars = renderStars(r.rating);
+              const commentEsc = $('<div>').text(r.comment || '').html().replace(/\n/g,'<br>');
+
+              return `
+                <tr data-review="${r.review_id}">
+                  <td>${r.review_id}</td>
+                  <td><span class="badge badge-soft">${r.item_id}</span></td>
+                  <td>${user}</td>
+                  <td>${stars} <span class="small text-muted ml-1">(${r.rating})</span></td>
+                  <td>${commentEsc}</td>
+                  <td>${created}</td>
+                  <td>
+                    <div class="btn-group btn-group-sm">
+                      <a class="btn btn-outline-info" href="item.html?id=${r.item_id}">View Item</a>
+                      <button type="button" class="btn btn-outline-danger btn-delete-review" data-id="${r.review_id}" data-item="${r.item_id}">Delete</button>
+                    </div>
+                    <!-- Hidden form guard to prevent implicit submit -->
+                    <form style="display:none"><button type="button"></button></form>
+                  </td>
+                </tr>
+              `;
+            }).join('');
+            $tb.html(html);
+          }
+
+          $('#summary').text(`Showing ${slice.length} of ${total} review(s)`);
+          $('#pageInfo').text(`Page ${page} / ${pages}`);
+        }
+
+        function loadAllReviews() {
+          // Faster initial load: fetch latest reviews by iterating only items present in UI soon as we get them
+          $.get(url + 'api/v1/items', function(resp){
+            const items = (resp && (resp.rows || resp.result || resp)) || [];
+            const ids = items.map(it => it.item_id).filter(Boolean);
+
+            if (!ids.length) {
+              $('#reviewsTable tbody').html('<tr><td colspan="7" class="text-center text-muted p-4">No items found.</td></tr>');
+              return;
+            }
+
+            // Progressive rendering: render per item as it resolves to feel faster
+            allRows = [];
+            let completed = 0;
+            const $tb = $('#reviewsTable tbody');
+            $tb.html('<tr><td colspan="7" class="text-center text-muted p-4">Loading reviews...</td></tr>');
+
+            ids.forEach((id, idx) => {
+              $.get(url + 'api/v1/reviews/' + id)
+                .done(r => {
+                  const arr = (r && (r.rows || r.result || r)) || [];
+                  arr.forEach(row => {
+                    allRows.push({
+                      review_id: row.review_id,
+                      account_id: row.account_id,
+                      item_id: row.item_id || id,
+                      comment: row.comment,
+                      rating: row.rating,
+                      created_at: row.created_at,
+                      username: row.username
+                    });
+                  });
+                })
+                .always(() => {
+                  completed++;
+                  // Re-render every few completions to keep UI responsive
+                  if (completed === ids.length || completed % 3 === 0) {
+                    page = 1;
+                    renderTable();
+                  }
+                });
+            });
+          }).fail(function(){
+            $('#reviewsTable tbody').html('<tr><td colspan="7" class="text-center text-danger p-4">Failed to load items.</td></tr>');
+          });
+        }
+
+        $('#btnSearch').on('click', function(){
+          page = 1;
+          renderTable();
+        });
+        $('#searchBox').on('keypress', function(e){
+          if (e.which === 13) {
+            page = 1;
+            renderTable();
+          }
+        });
+
+        // Delegated delete handler – ensure it runs once and always active
+        $(document).off('click.reviews', '.btn-delete-review');
+        $(document).on('click.reviews', '.btn-delete-review', function(e){
+          e.preventDefault();
+          e.stopPropagation();
+
+          // SweetAlert2 check
+          if (typeof Swal === 'undefined') {
+            alert('Confirm dialog not available.');
+            return;
+          }
+
+          var reviewId = $(this).data('id');
+          var token = sessionStorage.getItem('token');
+          if (!token) {
+            Swal.fire({ icon: 'warning', text: 'You must be logged in as admin.' });
+            return;
+          }
+
+          Swal.fire({
+            title: 'Delete review?',
+            text: 'This action cannot be undone.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Delete',
+            confirmButtonColor: '#d33',
+            allowOutsideClick: false,
+            allowEscapeKey: false
+          }).then(function(res){
+            if (!res.isConfirmed) return;
+
+            $.ajax({
+              url: url + 'api/v1/reviews/' + reviewId,
+              type: 'DELETE',
+              headers: { 'Authorization': 'Bearer ' + token },
+              success: function() {
+                // Update local model and DOM
+                allRows = allRows.filter(function(r){ return String(r.review_id) !== String(reviewId); });
+                $('tr[data-review="'+reviewId+'"]').remove();
+                Swal.fire({ icon: 'success', text: 'Review deleted.' });
+                renderTable();
+              },
+              error: function(xhr) {
+                var msg = 'Failed to delete review.';
+                if (xhr && xhr.responseJSON) {
+                  msg = xhr.responseJSON.error || xhr.responseJSON.details || msg;
+                } else if (xhr && xhr.statusText) {
+                  msg = xhr.statusText;
+                }
+                Swal.fire({ icon: 'error', text: msg });
+              }
+            });
+          });
+        });
+
+        // Pagination
+        $(document).off('click.reviews', '#prevPage');
+        $(document).on('click.reviews', '#prevPage', function(){
+          if (page > 1) { page--; renderTable(); }
+        });
+        $(document).off('click.reviews', '#nextPage');
+        $(document).on('click.reviews', '#nextPage', function(){
+          const rows = applySearch();
+          const pages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+          if (page < pages) { page++; renderTable(); }
+        });
+
+        loadAllReviews();
+      })();
+    </script>
+  </body>
+</html>

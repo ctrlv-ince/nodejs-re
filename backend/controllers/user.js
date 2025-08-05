@@ -187,8 +187,6 @@ const loginUser = async (req, res) => {
             console.log('[Auth] Refresh token GENERATED at login', {
                 user_id: user.user_id,
                 email: user.email,
-                ip,
-                userAgent,
                 refresh_token: rawRefresh
             });
         } catch (logErr) {

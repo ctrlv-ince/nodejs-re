@@ -122,7 +122,6 @@ exports.updateItem = (req, res) => {
 
     const { item_name, item_description, price, quantity, group_id } = req.body;
 
-    // Build dynamic update for item fields (allow partial updates)
     const fields = [];
     const params = [];
 
@@ -139,7 +138,6 @@ exports.updateItem = (req, res) => {
         params.push(price);
     }
 
-    // Normalize uploaded image path(s) (optional)
     // Support both single file (req.file) and multiple files (req.files as set by upload.array('images', 10))
     let normalizedImagePath = null;
     let normalizedImagePaths = [];
@@ -149,7 +147,6 @@ exports.updateItem = (req, res) => {
             const afterImages = diskPath.split('/images/')[1];
             return afterImages ? `uploads/${afterImages}` : diskPath.replace(/^images/, 'uploads');
         });
-        // Keep first as normalizedImagePath for backward-compat with primary update logic
         normalizedImagePath = normalizedImagePaths[0];
     } else if (req.file) {
         const diskPath = req.file.path.replace(/\\/g, "/");
@@ -187,9 +184,6 @@ exports.updateItem = (req, res) => {
         }
     };
 
-    // After core item/inventory/group updates, handle images:
-    // - If multiple images uploaded, unset current primary, set first uploaded as primary, insert the rest as non-primary.
-    // - If a single image uploaded (legacy), keep behavior: replace/set primary with that image.
     const finalizeWithImage = (done) => {
         if ((!normalizedImagePath) && (!normalizedImagePaths || normalizedImagePaths.length === 0)) {
             return done();

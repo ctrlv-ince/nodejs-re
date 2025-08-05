@@ -149,9 +149,23 @@ $(function() {
     const $input = $('#searchInput');
     if (!$input.length) return;
 
+    // Provide a basic fallback if jQuery UI is missing
+    if (!$.ui || typeof $input.autocomplete !== 'function') {
+      // Fallback: show inline quick results under the input while typing
+      $input.on('input', function () {
+        const term = $(this).val().trim();
+        if (term.length < 1) {
+          $('#searchResults').empty();
+          return;
+        }
+        throttleSuggest(term);
+      });
+      return;
+    }
+
     $input.autocomplete({
       minLength: 1,
-      delay: 200,
+      delay: 100,
       source: function(request, response) {
         $.ajax({
           url: url + 'api/v1/items/search',
@@ -159,7 +173,6 @@ $(function() {
           data: { term: request.term, limit: 10 },
           dataType: 'json'
         }).done(function(res) {
-          // Expecting { rows: [ { item_id, item_name, price, image_path, item_description } ] }
           const rows = (res && (res.rows || res.items || [])) || [];
           const mapped = rows.map(function(it) {
             return {
@@ -179,9 +192,20 @@ $(function() {
         if (ui && ui.item && ui.item.id) {
           window.location.href = 'item.html?id=' + ui.item.id;
         }
+      },
+      open: function() {
+        // When the menu opens, also render the same suggestions into #searchResults for visibility
+        const menuItems = $(this).autocomplete('widget').find('li');
+        if (menuItems.length === 0) return;
+        const list = $('<div class="list-group"></div>');
+        menuItems.each(function(){
+          const $li = $(this);
+          // Mirror the label text
+          list.append(`<a class="list-group-item list-group-item-action">${$li.text()}</a>`);
+        });
+        $('#searchResults').html(list);
       }
     })
-    // Custom rendering of menu items: show image + name + price
     .autocomplete('instance')._renderItem = function(ul, item) {
       const imgSrc = item.image ? (url + item.image) : 'https://via.placeholder.com/40?text=?';
       const priceHtml = (item.price !== undefined && item.price !== null) ? `<span class="text-muted ml-2">₱${item.price}</span>` : '';
@@ -192,6 +216,47 @@ $(function() {
                  </div>`)
         .appendTo(ul);
     };
+
+    // Also trigger suggestions on input (without needing Enter)
+    $input.on('input', function () {
+      const val = $(this).val();
+      if (val && val.length >= 1) {
+        $input.autocomplete('search', val);
+      }
+    });
+  }
+
+  // Lightweight throttle for non-UI fallback suggestions
+  function throttleSuggest(term) {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(function () {
+      $.ajax({
+        url: url + 'api/v1/items/search',
+        method: 'GET',
+        data: { term: term, limit: 8 },
+        dataType: 'json'
+      }).done(function(res){
+        const rows = (res && (res.rows || res.items || [])) || [];
+        if (!rows.length) {
+          $('#searchResults').html('<div class="text-muted small">No suggestions</div>');
+          return;
+        }
+        const html = rows.map(function(it){
+          const imgSrc = (it.image_path || it.image) ? (url + (it.image_path || it.image)) : 'https://via.placeholder.com/40?text=?';
+          const priceHtml = (it.price !== undefined && it.price !== null) ? `<span class="text-muted ml-2">₱${it.price}</span>` : '';
+          const name = it.item_name || it.name || '(no name)';
+          return `
+            <a class="list-group-item list-group-item-action d-flex align-items-center" href="item.html?id=${it.item_id || it.id}">
+              <img src="${imgSrc}" style="width:40px;height:40px;object-fit:cover;border-radius:4px;margin-right:8px;">
+              <span>${name}</span>${priceHtml}
+            </a>
+          `;
+        }).join('');
+        $('#searchResults').html(`<div class="list-group">${html}</div>`);
+      }).fail(function(){
+        $('#searchResults').html('<div class="text-danger small">Suggestions unavailable</div>');
+      });
+    }, 150);
   }
 
   function performSearch(term) {
