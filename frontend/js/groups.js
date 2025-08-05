@@ -104,9 +104,71 @@ $(function () {
     });
   }
 
-  // Save group (create or update)
-  $('#groupForm').on('submit', function (e) {
+  // Inline validation + Save click (registration-style)
+  // Ensure only one binding
+  $(document).off('click.saveGroup').on('click.saveGroup', '#saveGroupBtn', function (e) {
     e.preventDefault();
+    const $form = $('#groupForm');
+    $form.addClass('validated');
+
+    // Initialize jQuery Validate for groupForm if not yet present
+    if (!$form.data('validator') && typeof $.validator !== 'undefined') {
+      $form.attr('novalidate', 'novalidate').find('[required]').removeAttr('required');
+      $form.validate({
+        ignore: [],
+        focusInvalid: false,
+        rules: {
+          group_name: { required: true, minlength: 2, maxlength: 100 },
+          group_description: { required: true, minlength: 5, maxlength: 500 }
+        },
+        messages: {
+          group_name: {
+            required: "Group name is required",
+            minlength: "Group name must be at least 2 characters",
+            maxlength: "Group name must not exceed 100 characters"
+          },
+          group_description: {
+            required: "Description is required",
+            minlength: "Provide at least 5 characters",
+            maxlength: "Description must be 500 characters or fewer"
+          }
+        },
+        errorElement: 'div',
+        errorClass: 'invalid-feedback',
+        validClass: 'is-valid',
+        onkeyup: function(el){ $(el).valid(); },
+        onfocusout: function(el){ $(el).valid(); },
+        errorPlacement: function(error, element) {
+          error.addClass('invalid-feedback');
+          const group = element.closest('.form-group, .col-md-5, .input-group');
+          (group.length ? group : element.parent()).find('div.invalid-feedback').filter(function () {
+            return $(this).data('for') === element.attr('id') || $(this).data('for') === element.attr('name');
+          }).remove();
+          error.attr('data-for', element.attr('name') || element.attr('id'));
+          (group.length ? group : element.parent()).append(error);
+        },
+        highlight: function(element) { $(element).addClass('is-invalid').removeClass('is-valid'); },
+        unhighlight: function(element) {
+          const $el = $(element);
+          const group = $el.closest('.form-group, .col-md-5, .input-group');
+          (group.length ? group : $el.parent()).find('div.invalid-feedback').filter(function () {
+            return $(this).data('for') === $el.attr('name') || $(this).data('for') === $el.attr('id');
+          }).remove();
+          $el.addClass('is-valid').removeClass('is-invalid');
+        },
+        submitHandler: function() { return false; }
+      });
+    }
+
+    // Validate all fields to show inline messages simultaneously
+    if (typeof $form.valid === 'function') {
+      $form.find(':input').each(function(){ if (typeof $(this).valid === 'function') { $(this).valid(); } });
+      if (!$form.valid()) {
+        return; // inline messages shown under fields
+      }
+    }
+
+    // Proceed with AJAX save only if form is valid
     const token = getToken();
     if (!token) return;
 
@@ -115,10 +177,6 @@ $(function () {
       group_name: $('#group_name').val().trim(),
       group_description: $('#group_description').val().trim(),
     };
-    if (!payload.group_name) {
-      Swal.fire({ icon: 'warning', text: 'Group name is required' });
-      return;
-    }
 
     const isCreate = !group_id;
     const method = isCreate ? 'POST' : 'PUT';
@@ -133,6 +191,9 @@ $(function () {
         Swal.fire({ icon: 'success', text: isCreate ? 'Group created' : 'Group updated', timer: 1200, showConfirmButton: false });
         $('#groupForm')[0].reset();
         $('#group_id').val('');
+        // Clear validation UI after reset
+        $('#groupForm').find('.is-invalid, .is-valid').removeClass('is-invalid is-valid');
+        $('#groupForm').find('div.invalid-feedback').remove();
         loadGroups();
       },
       error: function (xhr) {
@@ -141,6 +202,9 @@ $(function () {
       },
     });
   });
+
+  // Keep submit prevention to avoid accidental native submit (Enter key on inputs)
+  $('#groupForm').on('submit', function (e) { e.preventDefault(); });
 
   // Reset form
   $('#resetForm').on('click', function () {

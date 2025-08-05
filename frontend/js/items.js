@@ -299,10 +299,103 @@ $(function () {
   // Ensure single binding for submit and delete handlers
   $(document).off('submit', '#itemForm');
 
-  // Create or update submit
-  $('#itemForm').on('submit', function (e) {
+  // Create or update submit via Save button click to avoid native constraint validation UI
+  $(document).off('click.saveItem').on('click.saveItem', '#saveItemBtn', function (e) {
     e.preventDefault();
     if (window.__modalBusy) return;
+
+    const $form = $('#itemForm');
+    $form.addClass('validated');
+
+    // Ensure validator is initialized; if not, initialize with the same rules/messages used in validation.js
+    if (!$form.data('validator')) {
+      if (typeof $.validator !== 'undefined') {
+        // minimal inline init that mirrors validation.js block for #itemForm
+        $.validator.addMethod('currency2', function(value, element) {
+          return this.optional(element) || /^\d+(\.\d{1,2})?$/.test(value);
+        }, 'Enter a valid amount (max 2 decimals)');
+
+        $form.attr('novalidate', 'novalidate').find('[required]').removeAttr('required');
+        $form.validate({
+          ignore: [],
+          focusInvalid: false,
+          rules: {
+            item_name: { required: true, minlength: 2, maxlength: 100 },
+            item_description: { required: true, minlength: 5, maxlength: 2000 },
+            price: { required: true, number: true, min: 0, max: 999999.99, currency2: true },
+            quantity: { required: true, digits: true, min: 0, max: 1000000 },
+            group_id: {},
+            images: { extension: "jpg|jpeg|png|webp", filesize: 5 * 1024 * 1024 }
+          },
+          messages: {
+            item_name: {
+              required: "Item name is required",
+              minlength: "Item name must be at least 2 characters",
+              maxlength: "Item name must not exceed 100 characters"
+            },
+            item_description: {
+              required: "Description is required",
+              minlength: "Provide at least 5 characters",
+              maxlength: "Description is too long"
+            },
+            price: {
+              required: "Price is required",
+              number: "Enter a valid number",
+              min: "Price cannot be negative",
+              max: "Price is too large"
+            },
+            quantity: {
+              required: "Quantity is required",
+              digits: "Quantity must be a whole number",
+              min: "Quantity cannot be negative",
+              max: "Quantity is too large"
+            },
+            images: {
+              extension: "Allowed formats: JPG, JPEG, PNG, WEBP",
+              filesize: "Each file must be 5MB or less"
+            }
+          },
+          errorElement: 'div',
+          errorClass: 'invalid-feedback',
+          validClass: 'is-valid',
+          onkeyup: function(el){ $(el).valid(); },
+          onfocusout: function(el){ $(el).valid(); },
+          errorPlacement: function(error, element) {
+            error.addClass('invalid-feedback');
+            // Modal grid wrappers
+            const group = element.closest('.form-group, .col-md-4, .col-md-6, .input-group');
+            (group.length ? group : element.parent()).find('div.invalid-feedback').filter(function() {
+              return $(this).data('for') === element.attr('name');
+            }).remove();
+            error.attr('data-for', element.attr('name'));
+            (group.length ? group : element.parent()).append(error);
+          },
+          highlight: function(element) {
+            $(element).addClass('is-invalid').removeClass('is-valid');
+          },
+          unhighlight: function(element) {
+            const $el = $(element);
+            const group = $el.closest('.form-group, .col-md-4, .col-md-6, .input-group');
+            (group.length ? group : $el.parent()).find('div.invalid-feedback').filter(function() {
+              return $(this).data('for') === $el.attr('name');
+            }).remove();
+            $el.addClass('is-valid').removeClass('is-invalid');
+          },
+          submitHandler: function() { return false; }
+        });
+      }
+    }
+
+    // Now trigger validation so inline messages show
+    if (typeof $form.valid === 'function') {
+      $form.find(':input').each(function () { if (typeof $(this).valid === 'function') { $(this).valid(); } });
+      if (!$form.valid()) {
+        // ensure at least one message is visible by focusing first invalid without triggering native tooltip
+        const $firstInvalid = $form.find('.is-invalid:first');
+        if ($firstInvalid.length) { try { $firstInvalid[0].scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch(_) {} }
+        return;
+      }
+    }
 
     const id = $('#itemId').val();
     const isEdit = !!id;
@@ -318,7 +411,6 @@ $(function () {
     if (!isEdit) {
       const formEl = $('#itemForm')[0];
       const formData = new FormData(formEl);
-      // Ensure group_id is included (already present via form, but keep robust)
       const gid = $('#group_id').val();
       if (gid && !formData.has('group_id')) formData.append('group_id', gid);
       if (formData.has('image')) formData.delete('image');
@@ -331,7 +423,6 @@ $(function () {
         contentType: false,
         headers: { Authorization: `Bearer ${token}` },
         success: function (resp) {
-          // Show success toast BEFORE any reload so it's visible
           Swal.fire({
             icon: 'success',
             text: (resp && (resp.message || resp.success)) ? (resp.message || 'Item created.') : 'Item created.',
@@ -340,7 +431,6 @@ $(function () {
           }).then(() => {
             $('#itemModal').modal('hide');
             actionPending = null;
-            // Keep it simple and robust: refresh the page so DataTables is clean
             window.location.reload();
           });
         },
@@ -352,10 +442,8 @@ $(function () {
         }
       });
     } else {
-      // Build FormData directly from the form to preserve field names and include multiple files
       const formEl = $('#itemForm')[0];
       const formData = new FormData(formEl);
-      // Ensure group_id present from current select value
       const gid = $('#group_id').val();
       if (gid && !formData.has('group_id')) formData.append('group_id', gid);
       if (formData.has('image')) formData.delete('image');
@@ -366,13 +454,11 @@ $(function () {
         data: formData,
         processData: false,
         contentType: false,
-        headers: { Authorization: { toString(){return `Bearer ${token}`;} } }, /* keep stringification robust */
+        headers: { Authorization: { toString(){return `Bearer ${token}`;} } },
         success: function (resp) {
-          // Close modal and stop any pending state
           $('#itemModal').modal('hide');
           actionPending = null;
 
-          // Show success toast BEFORE refreshing so user sees confirmation
           const msg = (resp && (resp.message || resp.success)) ? (resp.message || 'Item updated.') : 'Item updated.';
           Swal.fire({
             icon: 'success',
@@ -380,7 +466,6 @@ $(function () {
             timer: 1000,
             showConfirmButton: false,
             willClose: () => {
-              // Refresh page after toast closes
               window.location.reload();
             }
           });

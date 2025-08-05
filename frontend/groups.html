@@ -42,17 +42,17 @@
           <div class="card mb-4">
             <div class="card-header">Create / Edit Group</div>
             <div class="card-body">
-              <form id="groupForm">
+              <form id="groupForm" novalidate>
                 <input type="hidden" id="group_id" />
                 <div class="form-group">
                   <label for="group_name">Group Name</label>
-                  <input type="text" class="form-control" id="group_name" placeholder="e.g. Motherboards" required />
+                  <input type="text" class="form-control" id="group_name" name="group_name" placeholder="e.g. Motherboards" />
                 </div>
                 <div class="form-group">
                   <label for="group_description">Description</label>
-                  <textarea class="form-control" id="group_description" rows="3" placeholder="Short description"></textarea>
+                  <textarea class="form-control" id="group_description" name="group_description" rows="3" placeholder="Short description"></textarea>
                 </div>
-                <button type="submit" class="btn btn-success">Save Group</button>
+                <button type="button" id="saveGroupBtn" class="btn btn-success">Save Group</button>
                 <button type="button" id="resetForm" class="btn btn-secondary ml-2">Reset</button>
               </form>
             </div>
@@ -90,6 +90,8 @@
     </div>
 
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <!-- jQuery Validation to enable inline form messages -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js"></script>
     <!-- DataTables JS (jQuery + Bootstrap 4 + Responsive) -->
     <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap4.min.js"></script>

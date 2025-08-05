@@ -180,20 +180,6 @@ const loginUser = async (req, res) => {
         const refreshHash = await bcrypt.hash(rawRefresh, bcryptRounds);
         const refreshTtlDays = parseInt(process.env.REFRESH_TOKEN_DAYS || '30', 10);
 
-        // Log generation 
-        try {
-            const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress || req.ip || 'unknown';
-            const userAgent = req.headers['user-agent'] || 'unknown';
-            console.log('[Auth] Refresh token GENERATED at login', {
-                user_id: user.user_id,
-                email: user.email,
-                refresh_token: rawRefresh
-            });
-        } catch (logErr) {
-            // Never break login flow due to logging issues
-            console.error('Failed to log refresh token generation (login):', logErr);
-        }
-
         const updateTokenSql = 'UPDATE users SET remember_token = ?, updated_at = NOW() WHERE user_id = ?';
         connection.execute(updateTokenSql, [refreshHash, user.user_id], (tokenErr) => {
             if (tokenErr) {

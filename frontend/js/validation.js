@@ -1,3 +1,4 @@
+
 $(document).ready(function() {
     // Custom validation methods
     $.validator.addMethod("strongPassword", function(value, element) {
@@ -18,6 +19,28 @@ $(document).ready(function() {
         }
         return regex.test(value);
     }, "Invalid format");
+
+    (function() {
+        // Turn off built-in validation UI globally
+        $('form').attr('novalidate', 'novalidate');
+
+        // Prevent Enter key from submitting forms unless explicitly allowed
+        $(document).off('keydown.globalEnterBlock').on('keydown.globalEnterBlock', 'form input, form select, form textarea', function(e) {
+            if (e.key === 'Enter') {
+                const $target = $(e.target);
+                // allow Enter inside textarea
+                if ($target.is('textarea')) return;
+                // if there is a visible submit button and focus is not on it, prevent native submit
+                const $form = $target.closest('form');
+                const hasSubmit = $form.find('button[type="submit"], input[type="submit"]').is(':visible');
+                if (hasSubmit) {
+                    e.preventDefault();
+                    // trigger click on the primary submit button so our guarded handler runs
+                    $form.find('button[type="submit"], input[type="submit"]').first().trigger('click');
+                }
+            }
+        });
+    })();
 
     // Registration form validation
     if ($('#registerForm').length) {
@@ -159,18 +182,7 @@ $(document).ready(function() {
                 return false;
             },
             invalidHandler: function(event, validator) {
-                // Show a toast when the form is invalid on submit
-                if (validator.numberOfInvalids()) {
-                    if (typeof Swal !== 'undefined') {
-                        Swal.fire({
-                            icon: 'error',
-                            text: 'Please fill out the required fields.',
-                            position: 'bottom-right',
-                            showConfirmButton: false,
-                            timer: 1500
-                        });
-                    }
-                }
+                // No toast for registration; rely on inline messages
             }
         });
 
@@ -242,6 +254,147 @@ $(document).ready(function() {
             submitHandler: function(form) {
                 // This will be handled by the existing login button click handler
                 return false;
+            }
+        });
+    }
+
+    // Mirror registration UX for inline item edit: remove native tooltip and show inline errors
+    if ($('#inlineEditForm').length) {
+        const $form = $('#inlineEditForm');
+
+        // Fully disable native browser validation UI (source of "Please fill out this field")
+        $form.attr('novalidate', 'novalidate');
+        $form.find('[required]').removeAttr('required');
+
+        // Submit guard: prevent native submit and render ALL inline errors
+        $(document).off('submit.inlineEditGuard').on('submit.inlineEditGuard', '#inlineEditForm', function(e) {
+            e.preventDefault(); // block native browser validation
+            $form.addClass('validated');
+
+            if (typeof $form.valid === 'function') {
+                // Force validation on all inputs so every error shows at once
+                $form.find(':input').each(function () {
+                    if (typeof $(this).valid === 'function') { $(this).valid(); }
+                });
+            }
+            // Do not perform native submit here; item.js handles AJAX submit on its own bind
+            return false;
+        });
+
+        // Intercept submit button click to avoid native tooltip and delegate to the submit handler above
+        $(document).off('click.inlineEditButtonGuard').on('click.inlineEditButtonGuard', '#inlineEditForm button[type="submit"], #inlineEditForm .btn[type="submit"]', function(e) {
+            e.preventDefault();
+            $form.trigger('submit');
+        });
+    }
+
+    // REMOVE legacy inlineEditForm guard that shows toast; use the unified guard below
+    // (no content here)
+
+    // Item creation/edit modal validation (admin Manage Items -> #itemForm in items.html)
+    if ($('#itemForm').length) {
+        // custom decimal rule for price up to 2 decimals
+        $.validator.addMethod('currency2', function(value, element) {
+            return this.optional(element) || /^\d+(\.\d{1,2})?$/.test(value);
+        }, 'Enter a valid amount (max 2 decimals)');
+
+        // Disable native browser validation and strip required attributes to suppress tooltip
+        $('#itemForm').attr('novalidate', 'novalidate').find('[required]').removeAttr('required');
+
+        $('#itemForm').validate({
+            ignore: [],
+            focusInvalid: false,
+            rules: {
+                item_name: {
+                    required: true,
+                    minlength: 2,
+                    maxlength: 100
+                },
+                item_description: {
+                    required: true,
+                    minlength: 5,
+                    maxlength: 2000
+                },
+                price: {
+                    required: true,
+                    number: true,
+                    min: 0,
+                    max: 999999.99,
+                    currency2: true
+                },
+                quantity: {
+                    required: true,
+                    digits: true,
+                    min: 0,
+                    max: 1000000
+                },
+                group_id: {
+                    // optional; keep for future rule if needed
+                },
+                images: {
+                    extension: "jpg|jpeg|png|webp",
+                    filesize: 5 * 1024 * 1024
+                }
+            },
+            messages: {
+                item_name: {
+                    required: "Item name is required",
+                    minlength: "Item name must be at least 2 characters",
+                    maxlength: "Item name must not exceed 100 characters"
+                },
+                item_description: {
+                    required: "Description is required",
+                    minlength: "Provide at least 5 characters",
+                    maxlength: "Description is too long"
+                },
+                price: {
+                    required: "Price is required",
+                    number: "Enter a valid number",
+                    min: "Price cannot be negative",
+                    max: "Price is too large"
+                },
+                quantity: {
+                    required: "Quantity is required",
+                    digits: "Quantity must be a whole number",
+                    min: "Quantity cannot be negative",
+                    max: "Quantity is too large"
+                },
+                images: {
+                    extension: "Allowed formats: JPG, JPEG, PNG, WEBP",
+                    filesize: "Each file must be 5MB or less"
+                }
+            },
+            errorElement: 'div',
+            errorClass: 'invalid-feedback',
+            validClass: 'is-valid',
+            onkeyup: function(element){ $(element).valid(); },
+            onfocusout: function(element){ $(element).valid(); },
+            errorPlacement: function(error, element) {
+                error.addClass('invalid-feedback');
+                const group = element.closest('.form-group, .mb-3, .input-group, .col-md-4, .col-md-6');
+                (group.length ? group : element.parent()).find('div.invalid-feedback').filter(function() {
+                    return $(this).data('for') === element.attr('name');
+                }).remove();
+                error.attr('data-for', element.attr('name'));
+                (group.length ? group : element.parent()).append(error);
+            },
+            highlight: function(element) {
+                $(element).addClass('is-invalid').removeClass('is-valid');
+            },
+            unhighlight: function(element) {
+                const $el = $(element);
+                const group = $el.closest('.form-group, .mb-3, .input-group, .col-md-4, .col-md-6');
+                (group.length ? group : $el.parent()).find('div.invalid-feedback').filter(function() {
+                    return $(this).data('for') === $el.attr('name');
+                }).remove();
+                $el.addClass('is-valid').removeClass('is-invalid');
+            },
+            submitHandler: function(form) {
+                // prevent plugin from submitting; items.js click handler does AJAX
+                return false;
+            },
+            invalidHandler: function(event, validator) {
+                // No toast; rely on inline messages like registration
             }
         });
     }
@@ -343,15 +496,7 @@ $(document).ready(function() {
                 return false;
             },
             invalidHandler: function(event, validator) {
-                if (validator.numberOfInvalids() && typeof Swal !== 'undefined') {
-                    Swal.fire({
-                        icon: 'error',
-                        text: 'Please correct the highlighted fields.',
-                        position: 'bottom-right',
-                        showConfirmButton: false,
-                        timer: 1500
-                    });
-                }
+                // No toast for profile; rely on inline messages for consistency
             }
         });
     }
@@ -379,8 +524,11 @@ $(document).ready(function() {
         }
     });
 
-    // Mark form as validated on first submit attempt
-    $('form').on('submit', function() {
+    // Mark form as validated on first submit attempt and disable native validation on all forms
+    $('form')
+      .attr('novalidate', 'novalidate')
+      .each(function(){ $(this).find('[required]').removeAttr('required'); })
+      .on('submit', function(e) {
         $(this).addClass('validated');
-    });
+      });
 });
