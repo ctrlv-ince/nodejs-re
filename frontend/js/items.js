@@ -294,8 +294,7 @@ $(function () {
     $('#imagePreview').empty();
   }
 
-  // Track pending action to avoid overlapping toasts (e.g., delete confirmation vs. update success)
-  let actionPending = null; // 'delete-image' | 'update' | null
+  let actionPending = null; 
 
   // Ensure single binding for submit and delete handlers
   $(document).off('submit', '#itemForm');
@@ -303,7 +302,6 @@ $(function () {
   // Create or update submit
   $('#itemForm').on('submit', function (e) {
     e.preventDefault();
-    // If a delete confirmation is in progress, block updates
     if (window.__modalBusy) return;
 
     const id = $('#itemId').val();
@@ -323,8 +321,6 @@ $(function () {
       // Ensure group_id is included (already present via form, but keep robust)
       const gid = $('#group_id').val();
       if (gid && !formData.has('group_id')) formData.append('group_id', gid);
-      // IMPORTANT: do NOT append files again; FormData(formEl) already includes all files under name="images"
-      // Ensure we don't have a stray single-field 'image' that backend no longer expects
       if (formData.has('image')) formData.delete('image');
 
       $.ajax({
@@ -362,8 +358,6 @@ $(function () {
       // Ensure group_id present from current select value
       const gid = $('#group_id').val();
       if (gid && !formData.has('group_id')) formData.append('group_id', gid);
-      // IMPORTANT: do NOT append files again; FormData(formEl) already includes selected files under key "images"
-      // Remove any legacy single 'image' key to avoid backend confusion/duplication
       if (formData.has('image')) formData.delete('image');
 
       $.ajax({
